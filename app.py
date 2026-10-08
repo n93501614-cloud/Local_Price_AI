@@ -89,7 +89,6 @@ if not api_key:
     st.stop()
 
 client = SerpApiClient(api_key)
-
 db = PriceDB()
 # =========================================================
 # SEARCH SECTION
