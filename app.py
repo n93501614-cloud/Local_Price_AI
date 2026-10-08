@@ -1,103 +1,146 @@
 import os
 import streamlit as st
-from dotenv import load_dotenv
+import pandas as pd
 
 from serpapi_client import SerpApiClient
 from database import PriceDB
-from scoring import enrich_products, enrich_stores, build_recommendation
+from scoring import (
+    enrich_products,
+    enrich_stores,
+    build_recommendation
+)
 from reports import create_pdf_report
 
-load_dotenv()
+
+# =========================================================
+# PAGE CONFIGURATION
+# =========================================================
 
 st.set_page_config(
     page_title="LocalPrice AI",
     page_icon="🛒",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="collapsed"
 )
 
-st.markdown("""
-<style>
-.block-container {
-    padding-top: 1.5rem;
-    max-width: 1400px;
-}
-
-.hero {
-    padding: 28px;
-    border-radius: 18px;
-    background: linear-gradient(135deg,#111827,#1f2937);
-    color: white;
-    margin-bottom: 20px;
-}
-
-.hero h1 {
-    margin: 0 0 8px 0;
-}
-
-.hero p {
-    margin: 0;
-    opacity: .85;
-}
-
-.card {
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 12px;
-}
-
-.badge {
-    display: inline-block;
-    padding: 4px 9px;
-    border-radius: 999px;
-    background: #eef2ff;
-    margin-right: 5px;
-    font-size: 12px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-st.markdown("""
-<div class="hero">
-<h1>🛒 LocalPrice AI</h1>
-<p>AI-powered online + local shopping intelligence using SerpApi.</p>
-</div>
-""", unsafe_allow_html=True)
 
 # =========================================================
-# API KEY
+# CUSTOM CSS
 # =========================================================
 
+st.markdown(
+    """
+    <style>
+
+    .block-container {
+        padding-top: 1.5rem;
+        max-width: 1400px;
+    }
+
+    .hero {
+        padding: 30px;
+        border-radius: 18px;
+        background:
+            linear-gradient(
+                135deg,
+                #111827,
+                #1f2937
+            );
+        color: white;
+        margin-bottom: 24px;
+    }
+
+    .hero h1 {
+        margin: 0 0 8px 0;
+        font-size: 38px;
+    }
+
+    .hero p {
+        margin: 0;
+        opacity: 0.85;
+        font-size: 17px;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
 # =========================================================
-# API KEY
+# HERO
+# =========================================================
+
+st.markdown(
+    """
+    <div class="hero">
+        <h1>🛒 LocalPrice AI</h1>
+        <p>
+            AI-powered online + local shopping intelligence
+            using SerpApi.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# =========================================================
+# SERPAPI KEY
 # =========================================================
 
 try:
-    api_key = st.secrets["SERPAPI_API_KEY"]
+
+    api_key = st.secrets[
+        "SERPAPI_API_KEY"
+    ]
+
 except Exception:
+
     api_key = os.getenv(
         "SERPAPI_API_KEY",
         ""
     ).strip()
 
+
 if not api_key:
+
     st.error(
         "SerpApi API key is not configured."
     )
+
+    st.info(
+        "Add SERPAPI_API_KEY in "
+        "Streamlit App Settings → Secrets."
+    )
+
     st.stop()
 
-client = SerpApiClient(api_key)
+
+# =========================================================
+# CLIENT + DATABASE
+# =========================================================
+
+client = SerpApiClient(
+    api_key
+)
+
 db = PriceDB()
+
+
 # =========================================================
 # SEARCH SECTION
 # =========================================================
 
-st.subheader("🔎 Smart Product Search")
+st.subheader(
+    "🔎 Smart Product Search"
+)
 
 
-c1, c2 = st.columns([2, 1])
+c1, c2 = st.columns(
+    [2, 1]
+)
+
 
 with c1:
 
@@ -132,9 +175,9 @@ with c4:
 
     radius_km = st.slider(
         "Local Radius (km)",
-        1,
-        50,
-        10
+        min_value=1,
+        max_value=50,
+        value=10
     )
 
 
@@ -152,9 +195,6 @@ with c5:
     )
 
 
-
-
-
 search_clicked = st.button(
     "🚀 Find Best Deals",
     type="primary",
@@ -170,52 +210,85 @@ if search_clicked:
 
     if not query.strip():
 
-        st.error("Enter a product first.")
+        st.error(
+            "Enter a product first."
+        )
 
         st.stop()
+
+
     with st.spinner(
         "🔍 Searching Shopping + Maps + Web..."
     ):
+
+        # -------------------------------------------------
+        # GOOGLE SHOPPING
+        # -------------------------------------------------
 
         shopping = client.shopping_search(
             query=query,
             location=location
         )
 
+
+        # -------------------------------------------------
+        # GOOGLE MAPS
+        # -------------------------------------------------
+
         stores = client.maps_search(
-    query=f"{query} store",
-    location=location,
-    radius_km=radius_km
-)
+            query=f"{query} store",
+            location=location,
+            radius_km=radius_km
+        )
+
+
+        # -------------------------------------------------
+        # GOOGLE WEB SEARCH
+        # -------------------------------------------------
+
         web = client.web_search(
             query=f"{query} price {location}",
             location=location
         )
 
 
+    # =====================================================
+    # ERROR HANDLING
+    # =====================================================
+
     if shopping.get("error"):
 
         st.error(
-            f"Shopping search error: "
-            f"{shopping['error']}"
+            "Shopping search error: "
+            + str(
+                shopping["error"]
+            )
         )
 
 
     if stores.get("error"):
 
         st.error(
-            f"Maps search error: "
-            f"{stores['error']}"
+            "Maps search error: "
+            + str(
+                stores["error"]
+            )
         )
 
 
     if web.get("error"):
 
         st.warning(
-            f"Web search warning: "
-            f"{web['error']}"
+            "Web search warning: "
+            + str(
+                web["error"]
+            )
         )
 
+
+    # =====================================================
+    # PROCESS ONLINE PRODUCTS
+    # =====================================================
 
     products = enrich_products(
         shopping.get(
@@ -226,6 +299,10 @@ if search_clicked:
     )
 
 
+    # =====================================================
+    # PROCESS LOCAL STORES
+    # =====================================================
+
     local_stores = enrich_stores(
         stores.get(
             "local_results",
@@ -235,11 +312,15 @@ if search_clicked:
     )
 
 
-    # Save price snapshots
+    # =====================================================
+    # SAVE PRICE SNAPSHOTS
+    # =====================================================
 
     for product in products:
 
-        if product.get("price") is not None:
+        if product.get(
+            "price"
+        ) is not None:
 
             db.save_price(
 
@@ -271,6 +352,10 @@ if search_clicked:
             )
 
 
+    # =====================================================
+    # AI RECOMMENDATION
+    # =====================================================
+
     recommendation = build_recommendation(
         products,
         local_stores,
@@ -279,24 +364,40 @@ if search_clicked:
     )
 
 
-    st.session_state["products"] = products
+    # =====================================================
+    # SAVE SESSION DATA
+    # =====================================================
 
-    st.session_state["stores"] = local_stores
+    st.session_state[
+        "products"
+    ] = products
 
-    st.session_state["web"] = web.get(
+    st.session_state[
+        "stores"
+    ] = local_stores
+
+    st.session_state[
+        "web"
+    ] = web.get(
         "organic_results",
         []
     )
 
-    st.session_state["recommendation"] = (
-        recommendation
-    )
+    st.session_state[
+        "recommendation"
+    ] = recommendation
 
-    st.session_state["query"] = query
+    st.session_state[
+        "query"
+    ] = query
 
-    st.session_state["location"] = location
+    st.session_state[
+        "location"
+    ] = location
 
-    st.session_state["budget"] = budget
+    st.session_state[
+        "budget"
+    ] = budget
 
 
 # =========================================================
@@ -305,21 +406,33 @@ if search_clicked:
 
 if "products" in st.session_state:
 
-    products = st.session_state["products"]
+    products = st.session_state[
+        "products"
+    ]
 
-    stores = st.session_state["stores"]
+    stores = st.session_state[
+        "stores"
+    ]
 
-    web_results = st.session_state["web"]
+    web_results = st.session_state[
+        "web"
+    ]
 
-    recommendation = (
-        st.session_state["recommendation"]
-    )
+    recommendation = st.session_state[
+        "recommendation"
+    ]
 
-    query = st.session_state["query"]
+    query = st.session_state[
+        "query"
+    ]
 
-    location = st.session_state["location"]
+    location = st.session_state[
+        "location"
+    ]
 
-    budget = st.session_state["budget"]
+    budget = st.session_state[
+        "budget"
+    ]
 
 
     # =====================================================
@@ -329,8 +442,13 @@ if "products" in st.session_state:
     if recommendation:
 
         st.success(
-            "🏆 " +
-            recommendation["headline"]
+            "🏆 "
+            + str(
+                recommendation.get(
+                    "headline",
+                    "Best deal found"
+                )
+            )
         )
 
 
@@ -341,7 +459,7 @@ if "products" in st.session_state:
 
             st.metric(
                 "Deal Score",
-                f"{recommendation['score']}/100"
+                f"{recommendation.get('score', 0)}/100"
             )
 
 
@@ -349,9 +467,10 @@ if "products" in st.session_state:
 
             st.metric(
                 "Best Price",
-                recommendation[
-                    "best_price_text"
-                ]
+                recommendation.get(
+                    "best_price_text",
+                    "N/A"
+                )
             )
 
 
@@ -359,9 +478,10 @@ if "products" in st.session_state:
 
             st.metric(
                 "Rating",
-                recommendation[
-                    "rating_text"
-                ]
+                recommendation.get(
+                    "rating_text",
+                    "N/A"
+                )
             )
 
 
@@ -369,17 +489,22 @@ if "products" in st.session_state:
 
             st.metric(
                 "Local Options",
-                str(len(stores))
+                str(
+                    len(stores)
+                )
             )
 
 
         st.info(
-            recommendation["explanation"]
+            recommendation.get(
+                "explanation",
+                ""
+            )
         )
 
 
     # =====================================================
-    # TABS
+    # MAIN TABS
     # =====================================================
 
     tabs = st.tabs(
@@ -392,13 +517,13 @@ if "products" in st.session_state:
             "📷 Image Search",
             "🌐 Web Evidence",
             "🔔 Price Alerts",
-            "📄 Report",
+            "📄 Report"
         ]
     )
 
 
     # =====================================================
-    # ONLINE PRICES
+    # TAB 1 — ONLINE PRICES
     # =====================================================
 
     with tabs[0]:
@@ -411,23 +536,44 @@ if "products" in st.session_state:
         if not products:
 
             st.info(
-                "No usable priced shopping results were returned."
+                "No usable priced shopping "
+                "results were returned."
             )
 
 
-        for i, product in enumerate(products):
+        for i, product in enumerate(
+            products
+        ):
 
-            with st.container(border=True):
+            with st.container(
+                border=True
+            ):
 
                 cols = st.columns(
-                    [3, 1.2, 1, 1.2, 1.3]
+                    [
+                        3,
+                        1.2,
+                        1,
+                        1.2,
+                        1.3
+                    ]
                 )
 
+
+                # -----------------------------------------
+                # PRODUCT
+                # -----------------------------------------
 
                 with cols[0]:
 
                     st.markdown(
-                        f"### {product.get('title', 'Unknown product')}"
+                        "### "
+                        + str(
+                            product.get(
+                                "title",
+                                "Unknown product"
+                            )
+                        )
                     )
 
                     st.caption(
@@ -437,12 +583,23 @@ if "products" in st.session_state:
                         )
                     )
 
-                    if product.get("snippet"):
+
+                    if product.get(
+                        "snippet"
+                    ):
 
                         st.caption(
-                            product["snippet"][:220]
+                            str(
+                                product[
+                                    "snippet"
+                                ]
+                            )[:220]
                         )
 
+
+                # -----------------------------------------
+                # PRICE
+                # -----------------------------------------
 
                 with cols[1]:
 
@@ -454,12 +611,24 @@ if "products" in st.session_state:
                         )
                     )
 
-                    if product.get("old_price"):
+
+                    if product.get(
+                        "old_price"
+                    ):
 
                         st.caption(
-                            f"Old: {product['old_price']}"
+                            "Old: "
+                            + str(
+                                product[
+                                    "old_price"
+                                ]
+                            )
                         )
 
+
+                # -----------------------------------------
+                # RATING
+                # -----------------------------------------
 
                 with cols[2]:
 
@@ -478,36 +647,56 @@ if "products" in st.session_state:
                     )
 
 
+                # -----------------------------------------
+                # DELIVERY
+                # -----------------------------------------
+
                 with cols[3]:
 
                     st.write(
                         product.get(
                             "delivery"
                         )
-                        or "Delivery not listed"
+                        or
+                        "Delivery not listed"
                     )
 
-                    if product.get("tag"):
+
+                    if product.get(
+                        "tag"
+                    ):
 
                         st.caption(
-                            "🏷️ " +
-                            str(
-                                product["tag"]
+                            "🏷️ "
+                            + str(
+                                product[
+                                    "tag"
+                                ]
                             )
                         )
 
 
+                # -----------------------------------------
+                # ACTIONS
+                # -----------------------------------------
+
                 with cols[4]:
 
-                    if product.get("link"):
+                    if product.get(
+                        "link"
+                    ):
 
                         st.link_button(
                             "Open Seller",
-                            product["link"]
+                            product[
+                                "link"
+                            ]
                         )
 
 
-                    if product.get("product_id"):
+                    if product.get(
+                        "product_id"
+                    ):
 
                         if st.button(
                             "Product Details",
@@ -532,18 +721,28 @@ if "products" in st.session_state:
                             ] = detail
 
 
+                # -----------------------------------------
+                # PRODUCT DETAILS
+                # -----------------------------------------
+
                 detail = st.session_state.get(
                     f"detail_{i}"
                 )
 
 
-                if detail and not detail.get(
-                    "error"
+                if (
+                    detail
+                    and
+                    not detail.get(
+                        "error"
+                    )
                 ):
 
-                    product_detail = detail.get(
-                        "product_results",
-                        {}
+                    product_detail = (
+                        detail.get(
+                            "product_results",
+                            {}
+                        )
                     )
 
 
@@ -570,9 +769,14 @@ if "products" in st.session_state:
 
                         if specifications:
 
-                            for specification in specifications[
-                                :20
-                            ]:
+                            st.write(
+                                "**Specifications:**"
+                            )
+
+
+                            for specification in (
+                                specifications[:20]
+                            ):
 
                                 st.write(
                                     specification
@@ -580,7 +784,7 @@ if "products" in st.session_state:
 
 
     # =====================================================
-    # LOCAL STORES
+    # TAB 2 — NEARBY STORES
     # =====================================================
 
     with tabs[1]:
@@ -597,22 +801,41 @@ if "products" in st.session_state:
             )
 
 
-        for i, store in enumerate(stores):
+        for i, store in enumerate(
+            stores
+        ):
 
             with st.container(
                 border=True
             ):
 
                 cols = st.columns(
-                    [2.5, 1, 1.3, 2, 1.2]
+                    [
+                        2.5,
+                        1,
+                        1.3,
+                        2,
+                        1.2
+                    ]
                 )
 
+
+                # -----------------------------------------
+                # STORE
+                # -----------------------------------------
 
                 with cols[0]:
 
                     st.markdown(
-                        f"### {store.get('title', 'Unknown store')}"
+                        "### "
+                        + str(
+                            store.get(
+                                "title",
+                                "Unknown store"
+                            )
+                        )
                     )
+
 
                     st.caption(
                         store.get(
@@ -621,6 +844,7 @@ if "products" in st.session_state:
                         )
                     )
 
+
                     st.write(
                         store.get(
                             "address",
@@ -628,6 +852,10 @@ if "products" in st.session_state:
                         )
                     )
 
+
+                # -----------------------------------------
+                # RATING
+                # -----------------------------------------
 
                 with cols[1]:
 
@@ -641,28 +869,47 @@ if "products" in st.session_state:
                         )
                     )
 
+
                     st.caption(
                         f"{store.get('reviews', 0) or 0} reviews"
                     )
 
 
+                # -----------------------------------------
+                # OPEN STATUS
+                # -----------------------------------------
+
                 with cols[2]:
 
-                    st.write(
-                        "🟢 Open"
-                        if store.get(
-                            "open_state"
-                        )
-                        else
-                        "Status unknown"
-                    )
+                    if store.get(
+                        "open_state"
+                    ):
 
-                    if store.get("hours"):
+                        st.write(
+                            "🟢 Open"
+                        )
+
+                    else:
+
+                        st.write(
+                            "Status unknown"
+                        )
+
+
+                    if store.get(
+                        "hours"
+                    ):
 
                         st.caption(
-                            store["hours"]
+                            store[
+                                "hours"
+                            ]
                         )
 
+
+                # -----------------------------------------
+                # CONTACT
+                # -----------------------------------------
 
                 with cols[3]:
 
@@ -681,9 +928,15 @@ if "products" in st.session_state:
 
                         st.link_button(
                             "Website",
-                            store["website"]
+                            store[
+                                "website"
+                            ]
                         )
 
+
+                # -----------------------------------------
+                # REVIEWS
+                # -----------------------------------------
 
                 with cols[4]:
 
@@ -715,20 +968,29 @@ if "products" in st.session_state:
 
 
                     st.caption(
-                        "Price may need store confirmation."
+                        "Price may need "
+                        "store confirmation."
                     )
 
 
-                review_data = st.session_state.get(
-                    f"reviews_{i}"
+                # -----------------------------------------
+                # DISPLAY REVIEWS
+                # -----------------------------------------
+
+                review_data = (
+                    st.session_state.get(
+                        f"reviews_{i}"
+                    )
                 )
 
 
                 if review_data:
 
-                    reviews = review_data.get(
-                        "reviews",
-                        []
+                    reviews = (
+                        review_data.get(
+                            "reviews",
+                            []
+                        )
                     )
 
 
@@ -739,7 +1001,9 @@ if "products" in st.session_state:
                         )
 
 
-                        for review in reviews[:5]:
+                        for review in (
+                            reviews[:5]
+                        ):
 
                             review_text = (
                                 review.get(
@@ -769,7 +1033,7 @@ if "products" in st.session_state:
 
 
     # =====================================================
-    # REVIEWS
+    # TAB 3 — REVIEWS
     # =====================================================
 
     with tabs[2]:
@@ -788,11 +1052,19 @@ if "products" in st.session_state:
         review_texts = []
 
 
-        for key, value in st.session_state.items():
+        for key, value in (
+            st.session_state.items()
+        ):
 
             if (
-                key.startswith("reviews_")
-                and isinstance(value, dict)
+                key.startswith(
+                    "reviews_"
+                )
+                and
+                isinstance(
+                    value,
+                    dict
+                )
             ):
 
                 for review in value.get(
@@ -832,7 +1104,9 @@ if "products" in st.session_state:
                 "fast",
                 "excellent",
                 "friendly",
-                "price"
+                "price",
+                "amazing",
+                "quality"
             ]
 
 
@@ -845,7 +1119,8 @@ if "products" in st.session_state:
                 "expensive",
                 "rude",
                 "issue",
-                "problem"
+                "problem",
+                "slow"
             ]
 
 
@@ -867,13 +1142,23 @@ if "products" in st.session_state:
             )
 
 
-            if positive_count > negative_count:
+            if (
+                positive_count
+                >
+                negative_count
+            ):
 
-                sentiment = "Positive"
+                sentiment = "Positive 😊"
 
-            elif negative_count > positive_count:
+            elif (
+                negative_count
+                >
+                positive_count
+            ):
 
-                sentiment = "Mixed / Negative"
+                sentiment = (
+                    "Mixed / Negative 😕"
+                )
 
             else:
 
@@ -881,8 +1166,32 @@ if "products" in st.session_state:
 
 
             st.metric(
-                "Rule-Based Sentiment",
+                "Review Sentiment",
                 sentiment
+            )
+
+
+            c1, c2 = st.columns(2)
+
+
+            with c1:
+
+                st.metric(
+                    "Positive Signals",
+                    positive_count
+                )
+
+
+            with c2:
+
+                st.metric(
+                    "Negative Signals",
+                    negative_count
+                )
+
+
+            st.write(
+                "### Customer Feedback"
             )
 
 
@@ -902,7 +1211,7 @@ if "products" in st.session_state:
 
 
     # =====================================================
-    # PRICE HISTORY
+    # TAB 4 — PRICE HISTORY
     # =====================================================
 
     with tabs[3]:
@@ -918,9 +1227,6 @@ if "products" in st.session_state:
 
 
         if history:
-
-            import pandas as pd
-
 
             df = pd.DataFrame(
                 history
@@ -944,8 +1250,16 @@ if "products" in st.session_state:
             )
 
 
-            st.line_chart(
-                chart_data
+            if not chart_data.empty:
+
+                st.line_chart(
+                    chart_data,
+                    use_container_width=True
+                )
+
+
+            st.write(
+                "### Price Records"
             )
 
 
@@ -965,7 +1279,7 @@ if "products" in st.session_state:
 
 
     # =====================================================
-    # AI DECISION
+    # TAB 5 — AI DECISION
     # =====================================================
 
     with tabs[4]:
@@ -978,14 +1292,21 @@ if "products" in st.session_state:
         if recommendation:
 
             st.markdown(
-                f"## {recommendation['decision']}"
+                "## "
+                + str(
+                    recommendation.get(
+                        "decision",
+                        "🟡 CHECK BEFORE BUYING"
+                    )
+                )
             )
 
 
             st.write(
-                recommendation[
-                    "explanation"
-                ]
+                recommendation.get(
+                    "explanation",
+                    ""
+                )
             )
 
 
@@ -994,9 +1315,10 @@ if "products" in st.session_state:
             )
 
 
-            for reason in recommendation[
-                "reasons"
-            ]:
+            for reason in recommendation.get(
+                "reasons",
+                []
+            ):
 
                 st.write(
                     "•",
@@ -1004,18 +1326,20 @@ if "products" in st.session_state:
                 )
 
 
-            if recommendation.get(
-                "warnings"
-            ):
+            warnings = recommendation.get(
+                "warnings",
+                []
+            )
+
+
+            if warnings:
 
                 st.write(
                     "### ⚠️ Important Checks"
                 )
 
 
-                for warning in recommendation[
-                    "warnings"
-                ]:
+                for warning in warnings:
 
                     st.warning(
                         warning
@@ -1023,7 +1347,7 @@ if "products" in st.session_state:
 
 
     # =====================================================
-    # IMAGE SEARCH
+    # TAB 6 — IMAGE SEARCH
     # =====================================================
 
     with tabs[5]:
@@ -1033,14 +1357,22 @@ if "products" in st.session_state:
         )
 
 
+        st.write(
+            "Upload a product image and "
+            "search for visually similar products."
+        )
+
+
         uploaded = st.file_uploader(
-            "Upload JPG/JPEG/PNG/WebP (max 500 KB)",
+            "Upload JPG/JPEG/PNG/WebP "
+            "(max 500 KB)",
             type=[
                 "jpg",
                 "jpeg",
                 "png",
                 "webp"
-            ]
+            ],
+            key="product_image"
         )
 
 
@@ -1054,43 +1386,62 @@ if "products" in st.session_state:
         )
 
 
-        if uploaded and st.button(
-            "🔍 Find Products From Image"
-        ):
+        if uploaded:
 
-            if uploaded.size > 500 * 1024:
+            st.image(
+                uploaded,
+                caption="Uploaded Product",
+                use_container_width=False
+            )
 
-                st.error(
-                    "Image must be 500 KB or smaller."
-                )
 
-            else:
+            if st.button(
+                "🔍 Find Products From Image"
+            ):
 
-                with st.spinner(
-                    "Uploading image and searching Google Lens..."
+                if uploaded.size > (
+                    500 * 1024
                 ):
 
-                    image_id = (
-                        client.upload_image(
-                            uploaded.getvalue(),
-                            uploaded.name
-                        )
+                    st.error(
+                        "Image must be "
+                        "500 KB or smaller."
                     )
 
+                else:
 
-                    if image_id:
+                    with st.spinner(
+                        "Uploading image and "
+                        "searching Google Lens..."
+                    ):
 
-                        lens = (
-                            client.lens_search(
-                                image_id=image_id,
-                                search_type=lens_type
+                        image_id = (
+                            client.upload_image(
+                                uploaded.getvalue(),
+                                uploaded.name
                             )
                         )
 
 
-                        st.session_state[
-                            "lens_results"
-                        ] = lens
+                        if image_id:
+
+                            lens = (
+                                client.lens_search(
+                                    image_id=image_id,
+                                    search_type=lens_type
+                                )
+                            )
+
+
+                            st.session_state[
+                                "lens_results"
+                            ] = lens
+
+                        else:
+
+                            st.error(
+                                "Image upload failed."
+                            )
 
 
         lens = st.session_state.get(
@@ -1108,12 +1459,20 @@ if "products" in st.session_state:
 
             if (
                 not items
-                and lens_type == "products"
+                and
+                lens_type == "products"
             ):
 
                 items = lens.get(
                     "visual_matches",
                     []
+                )
+
+
+            if not items:
+
+                st.info(
+                    "No visual matches found."
                 )
 
 
@@ -1123,11 +1482,13 @@ if "products" in st.session_state:
                     border=True
                 ):
 
-                    st.write(
-                        "###",
-                        item.get(
-                            "title",
-                            "Visual match"
+                    st.markdown(
+                        "### "
+                        + str(
+                            item.get(
+                                "title",
+                                "Visual match"
+                            )
                         )
                     )
 
@@ -1150,22 +1511,28 @@ if "products" in st.session_state:
                         dict
                     ):
 
-                        st.write(
-                            "💰",
+                        value = (
                             price.get(
-                                "value",
-                                price.get(
-                                    "extracted_value",
-                                    ""
-                                )
+                                "value"
+                            )
+                            or
+                            price.get(
+                                "extracted_value"
                             )
                         )
 
 
+                        if value:
+
+                            st.write(
+                                "💰 Price:",
+                                value
+                            )
+
                     elif price:
 
                         st.write(
-                            "💰",
+                            "💰 Price:",
                             price
                         )
 
@@ -1188,12 +1555,14 @@ if "products" in st.session_state:
 
                         st.link_button(
                             "Open Result",
-                            item["link"]
+                            item[
+                                "link"
+                            ]
                         )
 
 
     # =====================================================
-    # WEB RESULTS
+    # TAB 7 — WEB EVIDENCE
     # =====================================================
 
     with tabs[6]:
@@ -1203,33 +1572,61 @@ if "products" in st.session_state:
         )
 
 
+        st.write(
+            "Supporting web results related "
+            "to the product and pricing."
+        )
+
+
+        if not web_results:
+
+            st.info(
+                "No web evidence was found."
+            )
+
+
         for result in web_results[:10]:
 
-            st.markdown(
-                f"### {result.get('title', '')}"
-            )
-
-
-            st.write(
-                result.get(
-                    "snippet",
-                    ""
-                )
-            )
-
-
-            if result.get(
-                "link"
+            with st.container(
+                border=True
             ):
 
-                st.link_button(
-                    "Open Source",
-                    result["link"]
+                st.markdown(
+                    "### "
+                    + str(
+                        result.get(
+                            "title",
+                            ""
+                        )
+                    )
                 )
+
+
+                if result.get(
+                    "snippet"
+                ):
+
+                    st.write(
+                        result[
+                            "snippet"
+                        ]
+                    )
+
+
+                if result.get(
+                    "link"
+                ):
+
+                    st.link_button(
+                        "Open Source",
+                        result[
+                            "link"
+                        ]
+                    )
 
 
     # =====================================================
-    # PRICE ALERTS
+    # TAB 8 — PRICE ALERTS
     # =====================================================
 
     with tabs[7]:
@@ -1239,15 +1636,25 @@ if "products" in st.session_state:
         )
 
 
+        st.write(
+            "Save a target price for this product."
+        )
+
+
+        default_alert = (
+            budget
+            if budget > 0
+            else 50000.0
+        )
+
+
         alert_price = st.number_input(
             "Alert me when price is at or below (₹)",
             min_value=1.0,
-            value=max(
-                1.0,
-                budget
-                if budget
-                else 50000.0
-            )
+            value=float(
+                default_alert
+            ),
+            step=500.0
         )
 
 
@@ -1262,7 +1669,7 @@ if "products" in st.session_state:
 
 
             st.success(
-                "Price alert saved."
+                "Price alert saved successfully."
             )
 
 
@@ -1271,27 +1678,40 @@ if "products" in st.session_state:
 
         if alerts:
 
-            import pandas as pd
+            st.write(
+                "### Saved Alerts"
+            )
+
+
+            alerts_df = pd.DataFrame(
+                alerts
+            )
 
 
             st.dataframe(
-                pd.DataFrame(
-                    alerts
-                ),
+                alerts_df,
                 use_container_width=True,
                 hide_index=True
             )
 
 
+        else:
+
+            st.info(
+                "No price alerts saved yet."
+            )
+
+
         st.caption(
-            "Alerts are stored locally. "
-            "Automatic email/WhatsApp/push notifications "
-            "require a scheduled notification service."
+            "Price alerts are currently stored "
+            "locally. Automatic email, WhatsApp "
+            "or push notifications can be added "
+            "later."
         )
 
 
     # =====================================================
-    # PDF REPORT
+    # TAB 9 — PDF REPORT
     # =====================================================
 
     with tabs[8]:
@@ -1301,26 +1721,40 @@ if "products" in st.session_state:
         )
 
 
+        st.write(
+            "Generate a complete LocalPrice AI "
+            "shopping analysis report."
+        )
+
+
         if st.button(
-            "Generate PDF Report"
+            "📄 Generate PDF Report"
         ):
 
-            pdf_path = create_pdf_report(
+            with st.spinner(
+                "Generating PDF report..."
+            ):
 
-                query=query,
+                pdf_path = (
+                    create_pdf_report(
 
-                location=location,
+                        query=query,
 
-                products=products,
+                        location=location,
 
-                stores=stores,
+                        products=products,
 
-                recommendation=recommendation,
+                        stores=stores,
 
-                history=db.get_history(
-                    query
+                        recommendation=(
+                            recommendation
+                        ),
+
+                        history=db.get_history(
+                            query
+                        )
+                    )
                 )
-            )
 
 
             with open(
@@ -1334,7 +1768,9 @@ if "products" in st.session_state:
 
                     file,
 
-                    file_name="localprice_ai_report.pdf",
+                    file_name=(
+                        "localprice_ai_report.pdf"
+                    ),
 
                     mime="application/pdf"
                 )
@@ -1346,8 +1782,10 @@ if "products" in st.session_state:
 
 st.divider()
 
+
 st.caption(
-    "LocalPrice AI • SerpApi-powered shopping intelligence • "
-    "Prices and availability are search-result snapshots "
-    "and should be verified before purchase."
+    "LocalPrice AI • "
+    "SerpApi-powered shopping intelligence • "
+    "Prices and availability are search-result "
+    "snapshots and should be verified before purchase."
 )
