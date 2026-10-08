@@ -121,10 +121,10 @@ class SerpApiClient:
     ):
 
         return self._search(
-            "google_maps",
-            type="place",
+            "google_maps_reviews",
             data_id=data_id,
-            hl="en"
+            hl="en",
+            sort_by="qualityScore"
         )
 
 
