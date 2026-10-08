@@ -70,35 +70,23 @@ st.markdown("""
 # =========================================================
 # API KEY
 # =========================================================
+# =========================================================
+# API KEY
+# =========================================================
 
-api_key = os.getenv("SERPAPI_API_KEY", "").strip()
-
-with st.expander("🔐 API Configuration", expanded=not bool(api_key)):
-
-    st.write(
-        "Put your SerpApi key in a `.env` file as "
-        "`SERPAPI_API_KEY=your_key`."
-    )
-
-    manual_key = st.text_input(
-        "SerpApi API Key",
-        type="password"
-    )
-
-    if manual_key:
-        api_key = manual_key.strip()
-
+try:
+    api_key = st.secrets["SERPAPI_API_KEY"]
+except Exception:
+    api_key = os.getenv(
+        "SERPAPI_API_KEY",
+        ""
+    ).strip()
 
 if not api_key:
-    st.warning("Add your SerpApi API key to start.")
+    st.error(
+        "SerpApi API key is not configured."
+    )
     st.stop()
-
-
-client = SerpApiClient(api_key)
-
-db = PriceDB()
-
-
 # =========================================================
 # SEARCH SECTION
 # =========================================================
