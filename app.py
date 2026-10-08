@@ -1210,8 +1210,8 @@ if "products" in st.session_state:
             )
 
 
-    # =====================================================
-    # TAB 4 — PRICE HISTORY
+        # =====================================================
+    # PRICE HISTORY
     # =====================================================
 
     with tabs[3]:
@@ -1220,55 +1220,87 @@ if "products" in st.session_state:
             "📈 Price History"
         )
 
-
         history = db.get_history(
             query
         )
 
-
         if history:
+
+            import pandas as pd
 
             df = pd.DataFrame(
                 history
             )
 
-
-            df["timestamp"] = (
-                pd.to_datetime(
-                    df["timestamp"]
-                )
+            # Convert timestamp safely
+            df["timestamp"] = pd.to_datetime(
+                df["timestamp"],
+                errors="coerce"
             )
 
-
-            chart_data = (
-                df.pivot_table(
-                    index="timestamp",
-                    columns="source",
-                    values="price",
-                    aggfunc="min"
-                )
+            # Convert prices to numbers
+            df["price"] = pd.to_numeric(
+                df["price"],
+                errors="coerce"
             )
 
+            # Remove invalid prices
+            df = df[
+                df["price"].notna()
+                & (df["price"] > 0)
+            ]
 
-            if not chart_data.empty:
+            # Remove extreme outliers
+            if len(df) >= 4:
+
+                q1 = df["price"].quantile(0.25)
+                q3 = df["price"].quantile(0.75)
+
+                iqr = q3 - q1
+
+                upper_limit = (
+                    q3 + (3 * iqr)
+                )
+
+                df = df[
+                    df["price"] <= upper_limit
+                ]
+
+            if not df.empty:
+
+                chart_data = (
+                    df.pivot_table(
+                        index="timestamp",
+                        columns="source",
+                        values="price",
+                        aggfunc="min"
+                    )
+                )
 
                 st.line_chart(
                     chart_data,
-                    use_container_width=True
+                    height=450
                 )
 
+                st.caption(
+                    "📌 Invalid and extreme price outliers "
+                    "are excluded from the chart."
+                )
 
-            st.write(
-                "### Price Records"
-            )
+                st.dataframe(
+                    df.sort_values(
+                        "timestamp",
+                        ascending=False
+                    ),
+                    use_container_width=True,
+                    hide_index=True
+                )
 
+            else:
 
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=True
-            )
-
+                st.info(
+                    "No valid price history is available yet."
+                )
 
         else:
 
