@@ -161,19 +161,7 @@ with c5:
     )
 
 
-lat = st.number_input(
-    "Optional Latitude",
-    value=0.0,
-    format="%.6f"
-)
 
-lon = st.number_input(
-    "Optional Longitude",
-    value=0.0,
-    format="%.6f"
-)
-
-use_coords = lat != 0.0 and lon != 0.0
 
 
 search_clicked = st.button(
@@ -206,12 +194,10 @@ if search_clicked:
         )
 
         stores = client.maps_search(
-            query=f"{query} store",
-            location=location,
-            lat=lat if use_coords else None,
-            lon=lon if use_coords else None,
-            radius_km=radius_km
-        )
+    query=f"{query} store",
+    location=location,
+    radius_km=radius_km
+)
 
         web = client.web_search(
             query=f"{query} price {location}",
