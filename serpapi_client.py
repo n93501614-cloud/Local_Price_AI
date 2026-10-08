@@ -88,6 +88,30 @@ class SerpApiClient:
             hl="en",
             currency="INR"
         )
+            def maps_search(
+        self,
+        query: str,
+        location: str = "",
+        lat=None,
+        lon=None,
+        radius_km: int = 10
+    ):
+        full_query = f"{query} {location}".strip()
+
+        params = {
+            "q": full_query,
+            "type": "search",
+            "hl": "en",
+            "gl": "in"
+        }
+
+        if lat is not None and lon is not None:
+            params["ll"] = f"@{lat},{lon},14z"
+
+        return self._search(
+            "google_maps",
+            **params
+        )
 
     # =====================================================
     # GOOGLE MAPS
