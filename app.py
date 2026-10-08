@@ -186,6 +186,7 @@ if search_clicked:
     location=location,
     radius_km=radius_km
 )
+)
 
         web = client.web_search(
             query=f"{query} price {location}",
