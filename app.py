@@ -70,6 +70,10 @@ st.markdown("""
 # API KEY
 # =========================================================
 
+# =========================================================
+# API KEY
+# =========================================================
+
 try:
     api_key = st.secrets["SERPAPI_API_KEY"]
 except Exception:
@@ -83,7 +87,8 @@ if not api_key:
         "SerpApi API key is not configured."
     )
     st.stop()
-    client = SerpApiClient(api_key)
+
+client = SerpApiClient(api_key)
 
 db = PriceDB()
 # =========================================================
