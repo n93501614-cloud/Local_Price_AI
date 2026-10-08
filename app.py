@@ -83,6 +83,9 @@ if not api_key:
         "SerpApi API key is not configured."
     )
     st.stop()
+    client = SerpApiClient(api_key)
+
+db = PriceDB()
 # =========================================================
 # SEARCH SECTION
 # =========================================================
