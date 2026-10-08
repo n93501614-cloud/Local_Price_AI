@@ -92,46 +92,34 @@ class SerpApiClient:
     # =====================================================
     # GOOGLE MAPS
     # =====================================================
+def maps_search(
+    self,
+    query: str,
+    location: str = "",
+    lat=None,
+    lon=None,
+    radius_km: int = 10
+):
 
-    def maps_search(
-        self,
-        query: str,
-        location: str = "",
-        lat: Optional[float] = None,
-        lon: Optional[float] = None,
-        radius_km: int = 10
-    ):
+    params = {
+        "q": query,
+        "type": "search",
+        "hl": "en",
+        "gl": "in"
+    }
 
-        # IMPORTANT:
-        # Google Maps API does not use the normal
-        # Google Search "location" parameter here.
-        #
-        # For city-based searches, include the city
-        # directly in q.
+    # Only use coordinates if they are actually supplied.
+    if lat is not None and lon is not None:
 
-        full_query = (
-            f"{query} {location}"
-        ).strip()
-
-        params = {
-            "q": full_query,
-            "type": "search",
-            "hl": "en",
-            "gl": "in"
-        }
-
-        # Use coordinates only when supplied.
-        if lat is not None and lon is not None:
-
-            params["ll"] = (
-                f"@{lat},{lon},14z"
-            )
-
-        return self._search(
-            "google_maps",
-            **params
+        params["ll"] = (
+            f"@{lat},{lon},14z"
         )
 
+    return self._search(
+        "google_maps",
+        **params
+    )
+    
     # =====================================================
     # GOOGLE MAPS REVIEWS
     # =====================================================
