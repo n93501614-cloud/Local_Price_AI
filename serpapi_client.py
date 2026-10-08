@@ -3,7 +3,6 @@ from typing import Optional
 
 
 BASE_URL = "https://serpapi.com/search.json"
-
 IMAGE_URL = "https://serpapi.com/image"
 
 
@@ -14,26 +13,22 @@ class SerpApiClient:
         api_key: str,
         timeout: int = 45
     ):
-
         self.api_key = api_key
-
         self.timeout = timeout
 
+    # =====================================================
+    # COMMON SEARCH
+    # =====================================================
 
     def _search(
         self,
         engine: str,
         **params
     ):
-
         payload = {
-
             "engine": engine,
-
             "api_key": self.api_key,
-
             "output": "json",
-
             **{
                 key: value
                 for key, value in params.items()
@@ -41,24 +36,17 @@ class SerpApiClient:
             }
         }
 
-
         try:
 
             response = requests.get(
-
                 BASE_URL,
-
                 params=payload,
-
                 timeout=self.timeout
             )
 
-
             response.raise_for_status()
 
-
             data = response.json()
-
 
             if "error" in data:
 
@@ -66,9 +54,7 @@ class SerpApiClient:
                     "error": data["error"]
                 }
 
-
             return data
-
 
         except requests.RequestException as error:
 
@@ -77,14 +63,12 @@ class SerpApiClient:
                     f"Network/API error: {error}"
             }
 
-
         except ValueError:
 
             return {
                 "error":
                     "SerpApi returned invalid JSON."
             }
-
 
     # =====================================================
     # GOOGLE SHOPPING
@@ -97,20 +81,13 @@ class SerpApiClient:
     ):
 
         return self._search(
-
             "google_shopping",
-
             q=query,
-
             location=location,
-
             gl="in",
-
             hl="en",
-
             currency="INR"
         )
-
 
     # =====================================================
     # GOOGLE MAPS
@@ -125,30 +102,35 @@ class SerpApiClient:
         radius_km: int = 10
     ):
 
+        # IMPORTANT:
+        # Google Maps API does not use the normal
+        # Google Search "location" parameter here.
+        #
+        # For city-based searches, include the city
+        # directly in q.
+
+        full_query = (
+            f"{query} {location}"
+        ).strip()
+
         params = {
-
-            "q": query,
-
+            "q": full_query,
             "type": "search",
-
-            "location": location,
-
-            "hl": "en"
+            "hl": "en",
+            "gl": "in"
         }
 
-
+        # Use coordinates only when supplied.
         if lat is not None and lon is not None:
 
             params["ll"] = (
                 f"@{lat},{lon},14z"
             )
 
-
         return self._search(
             "google_maps",
             **params
         )
-
 
     # =====================================================
     # GOOGLE MAPS REVIEWS
@@ -161,20 +143,26 @@ class SerpApiClient:
     ):
 
         return self._search(
-
             "google_maps_reviews",
 
-            data_id=data_id or None,
+            data_id=(
+                data_id
+                if data_id
+                else None
+            ),
 
-            place_id=place_id or None,
+            place_id=(
+                place_id
+                if place_id
+                else None
+            ),
 
-            sort_by="qualityScore",
+            sort_by="newestFirst",
 
             hl="en",
 
             num=10
         )
-
 
     # =====================================================
     # GOOGLE PRODUCT
@@ -187,23 +175,27 @@ class SerpApiClient:
     ):
 
         return self._search(
-
             "google_product",
 
-            product_id=product_id or None,
+            product_id=(
+                product_id
+                if product_id
+                else None
+            ),
 
-            page_token=page_token or None,
+            page_token=(
+                page_token
+                if page_token
+                else None
+            ),
 
             gl="in",
-
             hl="en",
-
             currency="INR"
         )
 
-
     # =====================================================
-    # GOOGLE SEARCH
+    # GOOGLE WEB SEARCH
     # =====================================================
 
     def web_search(
@@ -213,18 +205,12 @@ class SerpApiClient:
     ):
 
         return self._search(
-
             "google",
-
             q=query,
-
             location=location,
-
             gl="in",
-
             hl="en"
         )
-
 
     # =====================================================
     # GOOGLE LENS
@@ -237,7 +223,6 @@ class SerpApiClient:
     ):
 
         return self._search(
-
             "google_lens",
 
             image_id=image_id,
@@ -248,7 +233,6 @@ class SerpApiClient:
 
             hl="en"
         )
-
 
     # =====================================================
     # IMAGE UPLOAD
@@ -263,48 +247,35 @@ class SerpApiClient:
         try:
 
             files = {
-
                 "image": (
                     filename,
                     content
                 )
             }
 
-
             data = {
-
                 "api_key":
                     self.api_key
             }
 
-
             response = requests.post(
-
                 IMAGE_URL,
-
                 files=files,
-
                 data=data,
-
                 timeout=self.timeout
             )
 
-
             response.raise_for_status()
 
-
             result = response.json()
-
 
             if "error" in result:
 
                 return None
 
-
             return result.get(
                 "image_id"
             )
-
 
         except requests.RequestException:
 
