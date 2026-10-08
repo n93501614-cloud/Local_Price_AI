@@ -213,14 +213,24 @@ class SerpApiClient:
     # GOOGLE LENS
     # --------------------------------------------------
 
+        # --------------------------------------------------
+    # GOOGLE LENS
+    # --------------------------------------------------
+
     def lens_search(
         self,
-        url: str
+        image_id: str = "",
+        search_type: str = "all"
     ):
+
+        params = {
+            "image_id": image_id,
+            "type": search_type,
+            "hl": "en",
+            "country": "in"
+        }
 
         return self._search(
             "google_lens",
-            url=url,
-            hl="en",
-            country="in"
+            **params
         )
