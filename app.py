@@ -174,8 +174,6 @@ if search_clicked:
         st.error("Enter a product first.")
 
         st.stop()
-
-
     with st.spinner(
         "🔍 Searching Shopping + Maps + Web..."
     ):
