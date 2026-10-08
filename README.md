@@ -1,36 +1,99 @@
-Local Price Finder AI
-No-sidebar Streamlit app for the SerpApi India Hackathon.
-Features
-Product search
-Location search
-Maximum budget
-Store search radius
-Product condition
-Shopping priority
-Google Shopping price comparison
-Deal Score
-Smart Deal Recommendation
-Nearby local stores using Google Maps
-Google Maps directions
-Customer rating and review count
-AI customer review sentiment analysis
-Demo Mode that uses no SerpApi requests
-Live SerpApi Mode
-Files
-app.py
-requirements.txt
-.gitignore
-Local run
-```bash
+# 🛒 LocalPrice AI
+
+LocalPrice AI is an AI-powered local and online shopping intelligence agent built using SerpApi.
+
+## Features
+
+- Google Shopping price comparison
+- Online seller comparison
+- Nearby local stores
+- Google Maps information
+- Store ratings
+- Store reviews
+- Product details
+- Delivery information
+- Discount detection
+- Smart Deal Score
+- AI-style purchase recommendation
+- Budget filtering
+- Price history
+- Price alerts
+- Google Lens image search
+- Web evidence
+- PDF report generation
+- SQLite database
+
+## SerpApi APIs Used
+
+- Google Shopping
+- Google Maps
+- Google Maps Reviews
+- Google Product
+- Google Search
+- Google Lens
+- SerpApi Image API
+
+## Installation
+
+Create a virtual environment:
+
+python -m venv .venv
+
+Activate on Windows:
+
+.venv\Scripts\Activate.ps1
+
+Install requirements:
+
 pip install -r requirements.txt
+
+Create `.env`:
+
+SERPAPI_API_KEY=YOUR_API_KEY
+
+Run:
+
 python -m streamlit run app.py
-```
-Streamlit Secrets
-Add this in Streamlit Cloud Secrets:
-```toml
-SERPAPI_API_KEY = "YOUR_REAL_SERPAPI_KEY"
-```
-Never commit your real API key to GitHub.
-Important
-Keep Demo Mode selected while testing if your SerpApi quota is exhausted.
-Switch to Live SerpApi only when your API quota is available.
+
+## Important Limitations
+
+Local Maps results do not guarantee that a specific product is available at a specific price.
+
+Online prices are search snapshots and can change.
+
+Delivery information can change.
+
+Always verify the final product variant, price and availability before purchasing.
+
+## Architecture
+
+User
+
+↓
+
+AI Shopping Interface
+
+↓
+
+SerpApi Shopping
+SerpApi Maps
+SerpApi Reviews
+SerpApi Product
+SerpApi Search
+SerpApi Lens
+
+↓
+
+Data Processing
+
+↓
+
+Deal Scoring
+
+↓
+
+AI Recommendation
+
+↓
+
+User
