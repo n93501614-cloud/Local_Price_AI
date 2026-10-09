@@ -302,44 +302,6 @@ if search_clicked:
         budget
     )
 
-    # Keep products with a direct retailer URL only
-    from urllib.parse import urlparse
-
-    def has_direct_seller_link(product):
-        for field in (
-            "direct_link",
-            "link",
-            "offer_link",
-            "product_url",
-        ):
-            url = product.get(field)
-
-            if not isinstance(url, str):
-                continue
-
-            url = url.strip()
-
-            if not url.startswith("https://"):
-                continue
-
-            host = (
-                urlparse(url).hostname or ""
-            ).lower()
-
-            if (
-                host
-                and "google." not in host
-                and "serpapi.com" not in host
-            ):
-                return True
-
-        return False
-
-    products = [
-        product
-        for product in products
-        if has_direct_seller_link(product)
-    ]
 
 
     
@@ -445,153 +407,15 @@ if search_clicked:
         "budget"
     ] = budget
     
-# RESULTS
+# RESULTS: restore data saved during the search so Streamlit reruns work safely.
 if "products" in st.session_state:
-    products = st.session_state["products"]
-
-    st.subheader("💰 Online Price Comparison")
-
-    if not products:
-        st.info(
-            "No usable priced shopping results were returned."
-        )
-    else:
-        for i, product in enumerate(products):
-            with st.container(border=True):
-                cols = st.columns([3, 1.2, 1, 1.2, 1.3])
-
-                with cols[0]:
-                    st.write(
-                        "**" + str(
-                            product.get("title", "Unknown Product")
-                        ) + "**"
-                    )
-
-                    seller_name = (
-                        product.get("source")
-                        or product.get("seller")
-                        or product.get("merchant")
-                        or "Seller unavailable"
-                    )
-
-                    st.caption(f"🏪 Seller: {seller_name}")
-
-                with cols[1]:
-                    price = product.get("extracted_price")
-
-                    if price is not None:
-                        st.write(f"**₹{price}**")
-                    else:
-                        st.write("Price unavailable")
-
-                with cols[2]:
-                    rating = product.get("rating")
-
-                    if rating is not None:
-                        st.write(f"⭐ {rating}")
-                    else:
-                        st.write("No rating")
-
-                with cols[3]:
-                    delivery = (
-                        product.get("delivery")
-                        or product.get("shipping")
-                        or "Not specified"
-                    )
-                    st.write(str(delivery))
-
-                with cols[4]:
-                    shopping_url = (
-                        product.get("direct_link")
-                        or product.get("product_url")
-                        or product.get("offer_link")
-                        or product.get("link")
-                    )
-
-                    if (
-                        isinstance(shopping_url, str)
-                        and shopping_url.startswith("https://")
-                    ):
-                        st.link_button(
-                            "🛒 Open Seller Website",
-                            shopping_url,
-                            key=f"seller_link_{i}",
-                            use_container_width=True
-                        )
-                    else:
-                        st.warning(
-                            "Direct seller link unavailable."
-                        )
-
-
-
-#===================================
-    # RECOMMENDATION SUMMARY
-    # =====================================================
-
-    if recommendation:
-
-        st.success(
-            "🏆 "
-            + str(
-                recommendation.get(
-                    "headline",
-                    "Best deal found"
-                )
-            )
-        )
-
-
-        a, b, c, d = st.columns(4)
-
-
-        with a:
-
-            st.metric(
-                "Deal Score",
-                f"{recommendation.get('score', 0)}/100"
-            )
-
-
-        with b:
-
-            st.metric(
-                "Best Price",
-                recommendation.get(
-                    "best_price_text",
-                    "N/A"
-                )
-            )
-
-
-        with c:
-
-            st.metric(
-                "Rating",
-                recommendation.get(
-                    "rating_text",
-                    "N/A"
-                )
-            )
-
-
-        with d:
-
-            st.metric(
-                "Local Options",
-                str(
-                    len(stores)
-                )
-            )
-
-
-        st.info(
-            recommendation.get(
-                "explanation",
-                ""
-            )
-        )
-
+    products = st.session_state.get("products", [])
+    stores = st.session_state.get("stores", [])
+    web_results = st.session_state.get("web", [])
+    recommendation = st.session_state.get("recommendation", {})
+    query = st.session_state.get("query", query)
+    location = st.session_state.get("location", location)
+    budget = st.session_state.get("budget", budget)
 
     # =====================================================
     # MAIN TABS
