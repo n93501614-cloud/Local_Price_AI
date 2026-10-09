@@ -694,29 +694,25 @@ if "products" in st.session_state:
                             product["link"]
                         )
 
-                    if st.button(
-                        "📦 Product Details",
-                        key=f"prod_{i}"
-                    ):
-                        product_id = product.get("product_id")
+                    
+if st.button("🛒 Visit Shopping Website", key=f"prod_{i}"):
+    import streamlit as st
 
-                        if not product_id:
-                            st.session_state[
-                                f"detail_error_{i}"
-                            ] = (
-                                "This product has no product ID. "
-                                "Try another search result."
-                            )
-                            st.session_state.pop(
-                                f"detail_{i}", None
-                            )
-                        else:
-                            with st.spinner(
-                                "Fetching product details..."
-                            ):
-                                detail = client.product_details(
-                                    product_id=str(product_id)
-                                )
+    shopping_url = (
+        product.get("link")
+        or product.get("product_url")
+        or product.get("offer_link")
+    )
+
+    if shopping_url and shopping_url.startswith("https://"):
+        st.link_button(
+            "Open Product on Seller Website ↗",
+            shopping_url
+        )
+    else:
+        st.warning(
+            "A direct seller link is not available for this product."
+        )
 
                             if detail.get("error"):
                                 st.session_state[
