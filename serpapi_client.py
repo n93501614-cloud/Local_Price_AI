@@ -151,18 +151,18 @@ class SerpApiClient:
     # PRODUCT DETAILS
     # --------------------------------------------------
 
+   
     def product_details(
         self,
         product_id: str
     ):
-
         return self._search(
-            "google_shopping_product",
+            "google_product",
             product_id=product_id,
             gl="in",
-            hl="en",
-            currency="INR"
+            hl="en"
         )
+
 
 
     # --------------------------------------------------
