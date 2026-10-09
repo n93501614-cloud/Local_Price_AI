@@ -284,9 +284,7 @@ if search_clicked:
                 web["error"]
             )
         )
-
-
-    
+        
     # =====================================================
     # PROCESS ONLINE PRODUCTS
     # =====================================================
@@ -299,16 +297,32 @@ if search_clicked:
         budget
     )
 
-    # Keep only products with a direct seller link
+    # Keep only products with direct seller links
     products = [
         product
         for product in products
-        if product.get("direct_link")
-        or product.get("link")
-        or product.get("offer_link")
-        or product.get("product_url")
+        if any(
+            isinstance(product.get(field), str)
+            and product.get(field).startswith("https://")
+            and urlparse(product.get(field)).hostname
+            and not (
+                "google." in urlparse(product.get(field)).hostname
+                or "serpapi.com" in urlparse(product.get(field)).hostname
+            )
+            for field in (
+                "direct_link",
+                "link",
+                "offer_link",
+                "product_url",
+            )
+        )
     ]
 
+
+
+    
+   
+        
 
 
     # =====================================================
