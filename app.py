@@ -744,59 +744,164 @@ if "products" in st.session_state:
                 # DISPLAY PRODUCT DETAILS
                 # -----------------------------------------
 
-                detail = st.session_state.get(
-                    f"detail_{i}"
+                
+# -----------------------------------------
+# DISPLAY PRODUCT DETAILS — SHOPPING VIEW
+# -----------------------------------------
+
+detail = st.session_state.get(f"detail_{i}")
+
+if detail:
+    if detail.get("error"):
+        st.error(str(detail["error"]))
+    else:
+        product_detail = detail.get("product_results") or detail
+
+        if isinstance(product_detail, list):
+            product_detail = (
+                product_detail[0] if product_detail else {}
+            )
+
+        if not isinstance(product_detail, dict):
+            product_detail = {}
+
+        with st.expander("📦 Product Information", expanded=True):
+
+            title = (
+                product_detail.get("title")
+                or product.get("title")
+                or "Product information"
+            )
+
+            st.subheader(title)
+
+            # Rating and review summary
+            rating = (
+                product_detail.get("rating")
+                or product.get("rating")
+            )
+
+            reviews = (
+                product_detail.get("reviews")
+                or product_detail.get("reviews_count")
+                or product.get("reviews")
+                or product.get("rating_count")
+            )
+
+            price = (
+                product_detail.get("price")
+                or product_detail.get("extracted_price")
+                or product.get("price_text")
+                or product.get("extracted_price")
+            )
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric(
+                    "💰 Price",
+                    str(price) if price is not None else "Unavailable"
                 )
 
-                if detail:
-                    with st.expander(
-                        "📦 Product Details",
-                        expanded=True
-                    ):
-                        product_detail = detail.get(
-                            "product_results",
-                            {}
+            with col2:
+                st.metric(
+                    "⭐ Rating",
+                    str(rating) if rating is not None else "Unavailable"
+                )
+
+            with col3:
+                st.metric(
+                    "💬 Reviews",
+                    str(reviews) if reviews is not None else "Unavailable"
+                )
+
+            st.divider()
+
+            # Product description
+            description = product_detail.get("description")
+
+            st.markdown("### 📝 About this product")
+
+            if description and isinstance(description, str):
+                st.write(description)
+            else:
+                st.caption(
+                    "The provider did not return a product description."
+                )
+
+            # Specifications
+            st.markdown("### ⚙️ Specifications")
+
+            specs = (
+                product_detail.get("specs")
+                or product_detail.get("specifications")
+                or product_detail.get("product_specs")
+                or []
+            )
+
+            if isinstance(specs, dict):
+                for key, value in specs.items():
+                    st.write(f"**{key}:** {value}")
+
+            elif isinstance(specs, list) and specs:
+                for item in specs:
+                    if isinstance(item, dict):
+                        for key, value in item.items():
+                            st.write(f"**{key}:** {value}")
+                    else:
+                        st.write(f"• {item}")
+
+            else:
+                st.caption(
+                    "Detailed specifications are unavailable for this result."
+                )
+
+            # Seller offers
+            st.markdown("### 🛍️ Available offers")
+
+            offers = (
+                product_detail.get("offers")
+                or product_detail.get("online_sellers")
+                or product_detail.get("sellers")
+                or []
+            )
+
+            if isinstance(offers, list) and offers:
+                for offer in offers[:10]:
+                    if not isinstance(offer, dict):
+                        continue
+
+                    seller = (
+                        offer.get("name")
+                        or offer.get("seller")
+                        or offer.get("merchant")
+                        or "Online seller"
+                    )
+
+                    offer_price = (
+                        offer.get("price")
+                        or offer.get("extracted_price")
+                        or "Price unavailable"
+                    )
+
+                    st.markdown(f"**{seller}** — {offer_price}")
+
+                    link = (
+                        offer.get("link")
+                        or offer.get("offer_link")
+                        or offer.get("url")
+                    )
+
+                    if link and str(link).startswith("https://"):
+                        st.link_button(
+                            "View offer",
+                            link,
+                            key=f"offer_{i}_{offers.index(offer)}"
                         )
-
-                        if product_detail:
-                            st.write(
-                                "**Product:**",
-                                product_detail.get(
-                                    "title",
-                                    product.get(
-                                        "title",
-                                        "Unknown"
-                                    )
-                                )
-                            )
-
-                            st.write(
-                                "**Price:**",
-                                product_detail.get(
-                                    "price",
-                                    product.get(
-                                        "price_text",
-                                        "Not available"
-                                    )
-                                )
-                            )
-
-                            st.write(
-                                "**Description:**",
-                                product_detail.get(
-                                    "description",
-                                    "Not provided by the API"
-                                )
-                            )
-
-                            st.write("**Full API details:**")
-                            st.json(product_detail)
-                        else:
-                            st.warning(
-                                "The API returned no product_results. "
-                                "Here is the response for debugging:"
-                            )
-                            st.json(detail)
+            else:
+                st.caption(
+                    "No separate seller offers were returned by the provider."
+                )
 
 
     # =====================================================
