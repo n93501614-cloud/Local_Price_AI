@@ -735,10 +735,8 @@ if "products" in st.session_state:
                 # -----------------------------------------
                 # ACTIONS — OPEN THE ACTUAL SELLER WEBSITE
                 # -----------------------------------------
-    with cols[4]:
-
-                    
-                    from urllib.parse import quote_plus
+                 with cols[4]:
+                from urllib.parse import quote_plus
 
                     product_title = str(
                         product.get("title")
