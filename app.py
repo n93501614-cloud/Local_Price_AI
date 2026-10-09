@@ -727,6 +727,26 @@ if st.button("🛒 Visit Shopping Website", key=f"prod_{i}"):
                 # DISPLAY PRODUCT DETAILS
                 # -----------------------------------------
 
+                shopping_url = (
+                    product.get("link")
+                    or product.get("product_url")
+                    or product.get("offer_link")
+                )
+
+                if (
+                    shopping_url
+                    and shopping_url.startswith("https://")
+                ):
+                    st.link_button(
+                        "🛒 Buy / View Product",
+                        shopping_url,
+                        key=f"seller_link_{i}"
+                    )
+                else:
+                    st.warning(
+                        "No direct shopping link was returned."
+                    )
+
                 
 # -----------------------------------------
 # DISPLAY PRODUCT DETAILS — SHOPPING VIEW
