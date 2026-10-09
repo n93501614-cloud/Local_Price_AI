@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 from serpapi_client import SerpApiClient
 from database import PriceDB
-from scoring import (
+from scoring import ( 
     enrich_products,
     enrich_stores,
     build_recommendation
