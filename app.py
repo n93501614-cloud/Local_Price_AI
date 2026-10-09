@@ -692,6 +692,8 @@ if "products" in st.session_state:
                                 "link"
                             ]
                         )
+if product.get("product_id"):
+    pass
 if st.button("Product Details", key=f"prod_{i}"):
     try:
         with st.spinner("Loading product details..."):
