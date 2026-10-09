@@ -680,42 +680,49 @@ if "products" in st.session_state:
                 # ACTIONS
                 # -----------------------------------------
 
+                
                 with cols[4]:
-
-                    if product.get(
-                        "link"
-                    ):
-
+                    if product.get("link"):
                         st.link_button(
                             "Open Seller",
-                            product[
-                                "link"
+                            product["link"]
+                        )
+
+                    if product.get("product_id"):
+                        if st.button(
+                            "Product Details",
+                            key=f"prod_{i}"
+                        ):
+                            try:
+                                with st.spinner(
+                                    "Loading product details..."
+                                ):
+                                    detail = client.product_details(
+                                        product_id=product["product_id"]
+                                    )
+
+                                    st.session_state[
+                                        f"detail_{i}"
+                                    ] = detail
+
+                                    st.session_state.pop(
+                                        f"detail_error_{i}",
+                                        None
+                                    )
+
+                            except Exception as e:
+                                st.session_state[
+                                    f"detail_error_{i}"
+                                ] = str(e)
+
+                    if st.session_state.get(
+                        f"detail_error_{i}"
+                    ):
+                        st.error(
+                            st.session_state[
+                                f"detail_error_{i}"
                             ]
                         )
-if product.get("product_id"):
-    pass
-if st.button("Product Details", key=f"prod_{i}"):
-    try:
-        with st.spinner("Loading product details..."):
-            product_id = product.get("product_id")
-if not product_id:
-    st.error("Product ID is missing for this item.")
-else:
-    detail = client.product_details(
-        product_id=product_id
-    )
-    st.session_state[f"detail_{i}"] = detail
-    st.session_state[f"detail_error_{i}"] = None
-except Exception as e:
-st.session_state[f"detail_error_{i}"] = str(e)
-
-
-if st.session_state.get(f"detail_error_{i}"):
-    st.error(
-        f"Could not load product details: "
-        f"{st.session_state[f'detail_error_{i}']}"
-    )
-
 
                 # -----------------------------------------
                 # PRODUCT DETAILS
@@ -725,27 +732,15 @@ if st.session_state.get(f"detail_error_{i}"):
                     f"detail_{i}"
                 )
 
-
-                if (
-                    detail
-                    and
-                    not detail.get(
-                        "error"
+                if detail and not detail.get("error"):
+                    product_detail = detail.get(
+                        "product_results",
+                        {}
                     )
-                ):
-
-                    product_detail = (
-                        detail.get(
-                            "product_results",
-                            {}
-                        )
-                    )
-
 
                     with st.expander(
                         "📦 Product Details"
                     ):
-
                         st.write(
                             "**Description:**",
                             product_detail.get(
@@ -754,29 +749,17 @@ if st.session_state.get(f"detail_error_{i}"):
                             )
                         )
 
-
-                        specifications = (
-                            product_detail.get(
-                                "specifications",
-                                []
-                            )
+                        specifications = product_detail.get(
+                            "specifications",
+                            []
                         )
 
-
                         if specifications:
+                            st.write("**Specifications:**")
 
-                            st.write(
-                                "**Specifications:**"
-                            )
+                            for specification in specifications[:20]:
+                                st.write(specification)
 
-
-                            for specification in (
-                                specifications[:20]
-                            ):
-
-                                st.write(
-                                    specification
-                                )
 
 
     # =====================================================
