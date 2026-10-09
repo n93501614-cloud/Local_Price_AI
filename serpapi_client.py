@@ -61,13 +61,12 @@ class SerpApiClient:
     # GOOGLE SHOPPING
     # --------------------------------------------------
 
-    def shopping_search(
+        def shopping_search(
         self,
         query: str,
         location: str = ""
     ):
-
-        return self._search(
+        data = self._search(
             "google_shopping",
             q=query,
             location=location,
@@ -75,6 +74,63 @@ class SerpApiClient:
             hl="en",
             currency="INR"
         )
+
+        # Stop if SerpApi returned an error
+        if not isinstance(data, dict) or data.get("error"):
+            return data
+
+        # Keep the original Google Shopping response
+        shopping_results = data.get("shopping_results", [])
+
+        for product in shopping_results:
+            if not isinstance(product, dict):
+                continue
+
+            # Preserve the Google Shopping page URL separately
+            product["google_shopping_link"] = (
+                product.get("product_link") or ""
+            )
+
+            # Find a possible direct retailer URL
+            possible_links = [
+                product.get("direct_link"),
+                product.get("link"),
+                product.get("offer_link"),
+                product.get("product_url"),
+            ]
+
+            direct_link = ""
+
+            for url in possible_links:
+                if not isinstance(url, str):
+                    continue
+
+                url = url.strip()
+
+                if not url.startswith(("https://", "http://")):
+                    continue
+
+                # Do not mistake Google/SerpApi URLs for seller URLs
+                from urllib.parse import urlparse
+
+                host = (
+                    urlparse(url).hostname or ""
+                ).lower()
+
+                if (
+                    host == "google.com"
+                    or host.endswith(".google.com")
+                    or host.endswith(".google.co.in")
+                    or host.endswith(".serpapi.com")
+                ):
+                    continue
+
+                direct_link = url
+                break
+
+            product["direct_link"] = direct_link
+
+        return data
 
 
     # --------------------------------------------------
