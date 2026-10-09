@@ -713,12 +713,9 @@ if st.button("🛒 Visit Shopping Website", key=f"prod_{i}"):
         st.warning(
             "A direct seller link is not available for this product."
         )
-
-                            
-
-                    error_message = st.session_state.get(
-                        f"detail_error_{i}"
-                    )
+error_message = st.session_state.get(
+    f"detail_error_{i}"
+)
 
                     if error_message:
                         st.error(error_message)
