@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 import pandas as pd
+from urllib.parse import urlparse
 
 from serpapi_client import SerpApiClient
 from database import PriceDB
