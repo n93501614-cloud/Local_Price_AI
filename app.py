@@ -692,29 +692,64 @@ if "products" in st.session_state:
 
                 with cols[4]:
 
+                    
+                    from urllib.parse import quote_plus
+
+                    product_title = str(
+                        product.get("title")
+                        or product.get("name")
+                        or ""
+                    )
+
+                    seller = str(
+                        product.get("source")
+                        or product.get("seller")
+                        or product.get("merchant")
+                        or ""
+                    ).lower()
+
+                    # Prefer a genuine direct seller URL.
                     shopping_url = (
-                        product.get("link")
+                        product.get("direct_link")
+                        or product.get("link")
                         or product.get("product_url")
                         or product.get("offer_link")
                     )
 
+                    # Reject Google Shopping URLs as seller URLs.
                     if (
                         isinstance(shopping_url, str)
-                        and shopping_url.startswith(
-                            ("https://", "http://")
-                        )
+                        and shopping_url.startswith("https://")
+                        and "google." not in shopping_url.lower().split("/")[2]
+                        and "serpapi.com" not in shopping_url.lower()
                     ):
                         st.link_button(
-                            "🛒 Visit Shopping Website",
+                            "🛒 Open Seller Website",
                             shopping_url,
                             key=f"seller_link_{i}"
                         )
-                    else:
-                        st.warning(
-                            "A direct shopping link is unavailable "
-                            "for this product."
+
+                    elif product_title and "amazon" in seller:
+                        st.link_button(
+                            "🛒 Find on Amazon",
+                            "https://www.amazon.in/s?k="
+                            + quote_plus(product_title),
+                            key=f"seller_link_{i}"
                         )
 
+                    elif product_title and "flipkart" in seller:
+                        st.link_button(
+                            "🛒 Find on Flipkart",
+                            "https://www.flipkart.com/search?q="
+                            + quote_plus(product_title),
+                            key=f"seller_link_{i}"
+                        )
+
+                    else:
+                        st.warning(
+                            "A direct seller link is unavailable "
+                            "for this result. Try another seller."
+                        )
 
                 
 
