@@ -289,6 +289,10 @@ if search_clicked:
     # =====================================================
     # PROCESS ONLINE PRODUCTS
     # =====================================================
+    
+    # =====================================================
+    # PROCESS ONLINE PRODUCTS
+    # =====================================================
 
     products = enrich_products(
         shopping.get(
@@ -298,34 +302,49 @@ if search_clicked:
         budget
     )
 
-    # Keep only products with direct seller links
+    # Keep products with a direct retailer URL only
+    from urllib.parse import urlparse
+
+    def has_direct_seller_link(product):
+        for field in (
+            "direct_link",
+            "link",
+            "offer_link",
+            "product_url",
+        ):
+            url = product.get(field)
+
+            if not isinstance(url, str):
+                continue
+
+            url = url.strip()
+
+            if not url.startswith("https://"):
+                continue
+
+            host = (
+                urlparse(url).hostname or ""
+            ).lower()
+
+            if (
+                host
+                and "google." not in host
+                and "serpapi.com" not in host
+            ):
+                return True
+
+        return False
+
     products = [
         product
         for product in products
-        if any(
-            isinstance(product.get(field), str)
-            and product.get(field).startswith("https://")
-            and urlparse(product.get(field)).hostname
-            and not (
-                "google." in urlparse(product.get(field)).hostname
-                or "serpapi.com" in urlparse(product.get(field)).hostname
-            )
-            for field in (
-                "direct_link",
-                "link",
-                "offer_link",
-                "product_url",
-            )
-        )
+        if has_direct_seller_link(product)
     ]
-    products = enrich_products(
-    shopping.get(
-        "shopping_results",
-        []
-    ),
-    budget
-)
 
+
+    
+            
+       
     # =====================================================
     # PROCESS LOCAL STORES
     # =====================================================
@@ -717,68 +736,17 @@ if "products" in st.session_state:
                 # ACTIONS — OPEN THE ACTUAL SELLER WEBSITE
                 # -----------------------------------------
 
+               
                 with cols[4]:
+                    shopping_url = product.get("direct_link")
 
-                    
-                    from urllib.parse import quote_plus
-
-                    product_title = str(
-                        product.get("title")
-                        or product.get("name")
-                        or ""
-                    )
-
-                    seller = str(
-                        product.get("source")
-                        or product.get("seller")
-                        or product.get("merchant")
-                        or ""
-                    ).lower()
-
-                    # Prefer a genuine direct seller URL.
-                    shopping_url = (
-                        product.get("direct_link")
-                        or product.get("link")
-                        or product.get("product_url")
-                        or product.get("offer_link")
-                    )
-
-                    # Reject Google Shopping URLs as seller URLs.
-                    if (
-                        isinstance(shopping_url, str)
-                        and shopping_url.startswith("https://")
-                        and "google." not in shopping_url.lower().split("/")[2]
-                        and "serpapi.com" not in shopping_url.lower()
-                    ):
+                    if shopping_url:
                         st.link_button(
                             "🛒 Open Seller Website",
                             shopping_url,
                             key=f"seller_link_{i}"
                         )
 
-                    elif product_title and "amazon" in seller:
-                        st.link_button(
-                            "🛒 Find on Amazon",
-                            "https://www.amazon.in/s?k="
-                            + quote_plus(product_title),
-                            key=f"seller_link_{i}"
-                        )
-
-                    elif product_title and "flipkart" in seller:
-                        st.link_button(
-                            "🛒 Find on Flipkart",
-                            "https://www.flipkart.com/search?q="
-                            + quote_plus(product_title),
-                            key=f"seller_link_{i}"
-                        )
-
-                    else:
-                        st.warning(
-                            "A direct seller link is unavailable "
-                            "for this result. Try another seller."
-                        )
-
-                
 
 
     # =====================================================
