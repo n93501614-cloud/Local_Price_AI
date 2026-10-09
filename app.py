@@ -318,13 +318,13 @@ if search_clicked:
             )
         )
     ]
-
-
-
-    
-   
-        
-
+    products = enrich_products(
+    shopping.get(
+        "shopping_results",
+        []
+    ),
+    budget
+)
 
     # =====================================================
     # PROCESS LOCAL STORES
