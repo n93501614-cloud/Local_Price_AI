@@ -444,44 +444,88 @@ if search_clicked:
     st.session_state[
         "budget"
     ] = budget
-
-
-# =========================================================
+    
 # RESULTS
-# =========================================================
-
 if "products" in st.session_state:
+    products = st.session_state["products"]
 
-    products = st.session_state[
-        "products"
-    ]
+    st.subheader("💰 Online Price Comparison")
 
-    stores = st.session_state[
-        "stores"
-    ]
+    if not products:
+        st.info(
+            "No usable priced shopping results were returned."
+        )
+    else:
+        for i, product in enumerate(products):
+            with st.container(border=True):
+                cols = st.columns([3, 1.2, 1, 1.2, 1.3])
 
-    web_results = st.session_state[
-        "web"
-    ]
+                with cols[0]:
+                    st.write(
+                        "**" + str(
+                            product.get("title", "Unknown Product")
+                        ) + "**"
+                    )
 
-    recommendation = st.session_state[
-        "recommendation"
-    ]
+                    seller_name = (
+                        product.get("source")
+                        or product.get("seller")
+                        or product.get("merchant")
+                        or "Seller unavailable"
+                    )
 
-    query = st.session_state[
-        "query"
-    ]
+                    st.caption(f"🏪 Seller: {seller_name}")
 
-    location = st.session_state[
-        "location"
-    ]
+                with cols[1]:
+                    price = product.get("extracted_price")
 
-    budget = st.session_state[
-        "budget"
-    ]
+                    if price is not None:
+                        st.write(f"**₹{price}**")
+                    else:
+                        st.write("Price unavailable")
+
+                with cols[2]:
+                    rating = product.get("rating")
+
+                    if rating is not None:
+                        st.write(f"⭐ {rating}")
+                    else:
+                        st.write("No rating")
+
+                with cols[3]:
+                    delivery = (
+                        product.get("delivery")
+                        or product.get("shipping")
+                        or "Not specified"
+                    )
+                    st.write(str(delivery))
+
+                with cols[4]:
+                    shopping_url = (
+                        product.get("direct_link")
+                        or product.get("product_url")
+                        or product.get("offer_link")
+                        or product.get("link")
+                    )
+
+                    if (
+                        isinstance(shopping_url, str)
+                        and shopping_url.startswith("https://")
+                    ):
+                        st.link_button(
+                            "🛒 Open Seller Website",
+                            shopping_url,
+                            key=f"seller_link_{i}",
+                            use_container_width=True
+                        )
+                    else:
+                        st.warning(
+                            "Direct seller link unavailable."
+                        )
 
 
-    # =====================================================
+
+#===================================
     # RECOMMENDATION SUMMARY
     # =====================================================
 
