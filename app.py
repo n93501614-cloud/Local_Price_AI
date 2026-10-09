@@ -698,6 +698,7 @@ if product.get(
 ):
 
                         
+
 if st.button("Product Details", key=f"prod_{i}"):
     try:
         with st.spinner("Loading product details..."):
@@ -709,7 +710,6 @@ if st.button("Product Details", key=f"prod_{i}"):
                 detail = client.product_details(
                     product_id=product_id
                 )
-
                 st.session_state[f"detail_{i}"] = detail
                 st.session_state[f"detail_error_{i}"] = None
 
