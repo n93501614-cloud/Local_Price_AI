@@ -685,86 +685,38 @@ if "products" in st.session_state:
                 # -----------------------------------------
                 # ACTIONS
                 # -----------------------------------------
+    
+                # -----------------------------------------
+                # ACTIONS — OPEN THE ACTUAL SELLER WEBSITE
+                # -----------------------------------------
 
                 with cols[4]:
 
-                    if product.get("link"):
+                    shopping_url = (
+                        product.get("link")
+                        or product.get("product_url")
+                        or product.get("offer_link")
+                    )
+
+                    if (
+                        isinstance(shopping_url, str)
+                        and shopping_url.startswith(
+                            ("https://", "http://")
+                        )
+                    ):
                         st.link_button(
-                            "Open Seller",
-                            product["link"]
+                            "🛒 Visit Shopping Website",
+                            shopping_url,
+                            key=f"seller_link_{i}"
+                        )
+                    else:
+                        st.warning(
+                            "A direct shopping link is unavailable "
+                            "for this product."
                         )
 
-                    
-if st.button("🛒 Visit Shopping Website", key=f"prod_{i}"):
-    import streamlit as st
-
-    shopping_url = (
-        product.get("link")
-        or product.get("product_url")
-        or product.get("offer_link")
-    )
-
-    if shopping_url and shopping_url.startswith("https://"):
-        st.link_button(
-            "Open Product on Seller Website ↗",
-            shopping_url
-        )
-    else:
-        st.warning(
-            "A direct seller link is not available for this product."
-        )
-error_message = st.session_state.get(
-    f"detail_error_{i}"
-)
-
-                    if error_message:
-                        st.error(error_message)
-
-                # -----------------------------------------
-                # DISPLAY PRODUCT DETAILS
-                # -----------------------------------------
-
-                shopping_url = (
-                    product.get("link")
-                    or product.get("product_url")
-                    or product.get("offer_link")
-                )
-
-                if (
-                    shopping_url
-                    and shopping_url.startswith("https://")
-                ):
-                    st.link_button(
-                        "🛒 Buy / View Product",
-                        shopping_url,
-                        key=f"seller_link_{i}"
-                    )
-                else:
-                    st.warning(
-                        "No direct shopping link was returned."
-                    )
 
                 
-# -----------------------------------------
-# DISPLAY PRODUCT DETAILS — SHOPPING VIEW
-# -----------------------------------------
-
-
-shopping_url = (
-    product.get("link")
-    or product.get("product_url")
-    or product.get("offer_link")
-)
-
-if shopping_url and shopping_url.startswith("https://"):
-    st.link_button(
-        "🛒 Buy / View Product",
-        shopping_url,
-        key=f"seller_link_{i}"
-    )
-else:
-    st.warning("No direct shopping link was returned for this item.")
-
 
 
     # =====================================================
