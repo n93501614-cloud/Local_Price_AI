@@ -692,11 +692,10 @@ if "products" in st.session_state:
                                 "link"
                             ]
                         )
-
-
-                    if product.get(
-                        "product_id"
-                    ):
+                        
+if product.get(
+    "product_id"
+):
 
                         
 if st.button("Product Details", key=f"prod_{i}"):
