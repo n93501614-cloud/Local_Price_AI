@@ -286,6 +286,7 @@ if search_clicked:
         )
 
 
+    
     # =====================================================
     # PROCESS ONLINE PRODUCTS
     # =====================================================
@@ -297,6 +298,17 @@ if search_clicked:
         ),
         budget
     )
+
+    # Keep only products with a direct seller link
+    products = [
+        product
+        for product in products
+        if product.get("direct_link")
+        or product.get("link")
+        or product.get("offer_link")
+        or product.get("product_url")
+    ]
+
 
 
     # =====================================================
