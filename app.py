@@ -692,23 +692,20 @@ if "products" in st.session_state:
                                 "link"
                             ]
                         )
-
-        if st.button("Product Details", key=f"prod_{i}"):
-            try:
-                with st.spinner("Loading product details..."):
-                    product_id = product.get("product_id")
-
-                    if not product_id:
-                        st.error("Product ID is missing for this item.")
-                    else:
-                        detail = client.product_details(
-                            product_id=product_id
-                        )
-                        st.session_state[f"detail_{i}"] = detail
-                        st.session_state[f"detail_error_{i}"] = None
-
-            except Exception as e:
-                st.session_state[f"detail_error_{i}"] = str(e)
+if st.button("Product Details", key=f"prod_{i}"):
+    try:
+        with st.spinner("Loading product details..."):
+            product_id = product.get("product_id")
+if not product_id:
+    st.error("Product ID is missing for this item.")
+else:
+    detail = client.product_details(
+        product_id=product_id
+    )
+    st.session_state[f"detail_{i}"] = detail
+    st.session_state[f"detail_error_{i}"] = None
+except Exception as e:
+st.session_state[f"detail_error_{i}"] = str(e)
 
 
 if st.session_state.get(f"detail_error_{i}"):
