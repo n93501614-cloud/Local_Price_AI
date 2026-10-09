@@ -714,20 +714,7 @@ if st.button("🛒 Visit Shopping Website", key=f"prod_{i}"):
             "A direct seller link is not available for this product."
         )
 
-                            if detail.get("error"):
-                                st.session_state[
-                                    f"detail_error_{i}"
-                                ] = str(detail["error"])
-                                st.session_state.pop(
-                                    f"detail_{i}", None
-                                )
-                            else:
-                                st.session_state[
-                                    f"detail_{i}"
-                                ] = detail
-                                st.session_state.pop(
-                                    f"detail_error_{i}", None
-                                )
+                            
 
                     error_message = st.session_state.get(
                         f"detail_error_{i}"
