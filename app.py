@@ -720,25 +720,11 @@ if "products" in st.session_state:
                                 ]
                             )
                         )
-
-
-                # -----------------------------------------
-                # ACTIONS
-                # -----------------------------------------
-
-                
-                
-                # -----------------------------------------
-                # ACTIONS
-                # -----------------------------------------
-    
-                
-                # -----------------------------------------
-                # ACTIONS — OPEN DIRECT SELLER WEBSITE
-                # -----------------------------------------
-
-                with cols[4]:
-                    shopping_url = product.get("direct_link")
+ # -----------------------------------------
+ # ACTIONS — OPEN DIRECT SELLER WEBSITE
+ # -----------------------------------------
+        with cols[4]:
+            shopping_url = product.get("direct_link")
 
                     if (
                         isinstance(shopping_url, str)
