@@ -533,30 +533,25 @@ str(
                 # -----------------------------------------
                 # PRICE
                 # -----------------------------------------
-
-                with cols[1]:
-
-                    st.metric(
-                        "Price",
-                        product.get(
-                            "price_text",
-                            "N/A"
-                        )
-                    )
-
-
-                    if product.get(
-                        "old_price"
-                    ):
-
-                        st.caption(
-                            "Old: "
-                            + str(
-                                product[
-                                    "old_price"
-                                ]
-                            )
-                        )
+with cols[1]:
+    st.metric(
+        "Price",
+        product.get(
+            "price_text",
+            "N/A"
+        )
+    )
+if product.get(
+    "old_price"
+):
+st.caption(
+    "Old: "
+    + str(
+        product[
+        "old_price"
+        ]
+    )
+)
 
 
                 # -----------------------------------------
