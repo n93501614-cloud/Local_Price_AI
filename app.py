@@ -593,34 +593,33 @@ if "products" in st.session_state:
                                 ]
                             )
                         )
-               # -----------------------------------------
-                # ACTIONS — OPEN DIRECT SELLER WEBSITE
+    
                 # -----------------------------------------
-      
-                # ACTIONS
+                # ACTIONS — OPEN PRODUCT LINK
+                # -----------------------------------------
+
                 with cols[4]:
+
                     shopping_url = (
                         product.get("direct_link")
+                        or product.get("product_link")
                         or product.get("product_url")
                         or product.get("offer_link")
                         or product.get("link")
+                        or product.get("url")
                     )
 
                     if (
                         isinstance(shopping_url, str)
-                        and shopping_url.startswith("https://")
+                        and shopping_url.startswith(
+                            ("https://", "http://")
+                        )
                     ):
                         st.link_button(
-                            "🛒 Open Seller Website",
+                            "🛒 Visit Product",
                             shopping_url,
                             key=f"seller_link_{i}"
                         )
-                    else:
-                        st.caption(
-                            "Direct seller link unavailable"
-                        )
-
-
 
     # =====================================================
     # TAB 2 — NEARBY STORES
