@@ -523,12 +523,12 @@ if product.get("snippet"):
 
                
 
-            str(
-                product[
-                "snippet"
-                ]
-            )[:220]
-        )
+str(
+    product[
+    "snippet"
+    ]
+)[:220]
+)
 
 
                 # -----------------------------------------
