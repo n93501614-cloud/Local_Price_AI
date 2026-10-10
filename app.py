@@ -515,9 +515,9 @@ if "products" in st.session_state:
             st.caption("Product link unavailable")
 
 
-        if product.get(
-            "snippet"
-        ):
+if product.get(
+    "snippet"
+):
 
         st.caption(
             str(
