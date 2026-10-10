@@ -497,6 +497,23 @@ if "products" in st.session_state:
                         )
                     )
 
+        product_link = (
+            product.get("product_link")
+            or product.get("link")
+            or product.get("product_url")
+            or product.get("url")
+        )
+
+        if product_link and product_link.startswith(
+            ("https://", "http://")
+        ):
+            st.link_button(
+                "🛒 Visit Product",
+                product_link
+            )
+        else:
+            st.caption("Product link unavailable")
+
 
                     if product.get(
                         "snippet"
