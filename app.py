@@ -516,10 +516,12 @@ if "products" in st.session_state:
 
 
 
-                if product.get("snippet"):
-                    st.caption(
-                        str(product["snippet"])[:220]
-                    )
+if product.get("snippet"):
+    st.caption(
+        str(product["snippet"])[:220]
+    )
+
+               
 
             str(
                 product[
