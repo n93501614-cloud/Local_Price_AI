@@ -503,12 +503,12 @@ if "products" in st.session_state:
                         or product.get("url")
                     )
 
-                    if (
-                        isinstance(product_link, str)
-                        and product_link.startswith(
-                            ("https://", "http://")
-                        )
-                    ):
+                if (
+                    isinstance(product_link, str)
+                    and product_link.startswith(
+                        ("https://", "http://")
+                    )
+                ):
                 # -----------------------------------------
                 # PRICE
                 # -----------------------------------------
