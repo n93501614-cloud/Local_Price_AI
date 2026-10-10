@@ -1,301 +1,606 @@
-LocalPrice AI
-Shopping intelligence for comparing online offers, discovering nearby stores, and making more informed buying decisions.
-LocalPrice AI is a Streamlit application that combines SerpApi-powered shopping, local-business, review, web, and visual search with a lightweight recommendation engine. It brings the results into one workflow so a shopper can compare available offers, review seller signals, inspect nearby stores, save price snapshots, and export a shopping report.
-Product status: LocalPrice AI is an actively developed prototype. Search results and recommendations are decision-support signals, not guarantees of price, stock, delivery, or seller quality.
-Contents
-Why LocalPrice AI
-Features
-How the workflow works
-Agent and capability map
-Technology stack
-Requirements
-Quick start
-API keys and configuration
-SerpApi engines and endpoints
-Project structure
-Architecture
-Data storage and generated reports
-Troubleshooting
-Current scope and limitations
-Extension roadmap
-Security notes
-Why LocalPrice AI
-Online price search and local shopping research often live in separate places. LocalPrice AI combines those research steps into a single interface and adds a transparent, rule-based recommendation layer.
-The intended workflow is simple: search → compare → inspect → decide → save → report.
-Features
-Online price comparison — find matching shopping listings and compare reported prices, sellers, ratings, review counts, and delivery information when available.
-Budget-aware discovery — enter a maximum budget and a preferred recommendation priority.
-Nearby store discovery — search Google Maps results for relevant stores around a chosen location.
-Review lookup and review signals — retrieve reviews for supported Maps results and show lightweight keyword-based feedback signals.
-Product details — request additional Google Product information when a result provides a supported product identifier.
-Web evidence — surface web results with source links and snippets that can help contextualize a product or price.
-Image-based product discovery — upload a supported image and use Google Lens search modes to find products or visual matches.
-Price history — store price snapshots locally in SQLite and chart the saved history for a query.
-Target-price alerts — save target-price records for later reference.
-Downloadable PDF report — export a summary of the search, recommendation, online listings, and nearby stores.
-Responsive web interface — use the workflow in a browser through Streamlit.
-How the workflow works
-Enter the product query and location.
-Optionally set a budget, local search radius, and recommendation preference.
-Start a search. The application requests Google Shopping, Google Maps, and Google Search data through SerpApi.
-Normalize available product/store fields and apply the application's scoring rules.
-Review online offers, local listings, review information, web evidence, and the recommendation in the dashboard tabs.
-Save price snapshots and target-price records to the local SQLite database.
-Generate a PDF report when needed.
-Agent and capability map
-LocalPrice AI is built as a modular, tool-using workflow. The roles below are task-specific components; they are not separate autonomous LLM agents, and the current recommendation engine does not require an external generative-AI API.
-Agent / capability
-Main implementation
-Responsibility
-Output
-Shopping Discovery
-SerpApiClient.shopping_search()
-Searches Google Shopping for the requested product.
-Online listings and reported offer details.
-Local Store Finder
-SerpApiClient.maps_search()
-Finds relevant nearby businesses using a location-aware Maps query.
-Store names, addresses, contact/opening details, ratings, and coordinates when supplied.
-Review Intelligence
-SerpApiClient.maps_reviews() plus the review section in app.py
-Retrieves reviews for supported Maps listings and summarizes simple positive/negative keyword signals.
-Review text and lightweight feedback indicators.
-Product Detail Enrichment
-SerpApiClient.product_details()
-Requests additional product information using a supported product ID.
-Additional product details when SerpApi returns them.
-Web Evidence
-SerpApiClient.web_search()
-Finds general web results related to the product, pricing, and location.
-Organic results, snippets, and source links.
-Visual Product Search
-SerpApiClient.upload_image() and SerpApiClient.lens_search()
-Uploads an image to SerpApi and searches with Google Lens.
-Product, visual-match, or exact-match results when available.
-Recommendation Engine
-enrich_products(), enrich_stores(), build_recommendation() in scoring.py
-Normalizes result fields and computes a rule-based recommendation using available price, rating, review, discount, budget, and priority signals.
-Ranked candidate and an explainable buy/check suggestion.
-Price Memory and Alerts
-PriceDB in database.py
-Saves price-history snapshots and target-price records in SQLite.
-Local history and saved alert records.
-Report Generator
-create_pdf_report() in reports.py
-Builds a downloadable PDF from the current search results.
-localprice_ai_report.pdf.
-The components can be extended independently as the product grows. If a future release introduces an LLM or an autonomous agent framework, document its provider, model, tool permissions, and API key separately rather than implying that one is already required.
-Technology stack
-Layer
-Technology
-Use
-User interface
-Streamlit
-Search form, dashboard tabs, charts, upload controls, and downloads.
-Application language
-Python 3.10+ recommended
-Application orchestration and business logic.
-Search data
-SerpApi REST API
-Shopping, Maps, Maps reviews, Google Product, Google Search, and Google Lens results.
-HTTP requests
-requests
-Sends requests to SerpApi.
-Configuration
-Environment variables, python-dotenv, and Streamlit Secrets
-Loads the SerpApi API key for local or hosted use.
-Data transformation
-pandas and Python utility functions
-Tabular processing and price-history display.
-Recommendation logic
-Custom Python rules in scoring.py
-Normalization and weighted heuristic scoring; not a trained ML model.
-Local persistence
-SQLite (sqlite3)
-Price snapshots and target-price records.
-PDF generation
-ReportLab
-Creates downloadable shopping reports.
-Requirements
-Python 3.10 or later is recommended.
-A SerpApi account and a valid API key.
-Internet access for SerpApi requests.
-The dependencies listed in requirements.txt.
-No separate Google Maps key, Google Cloud key, OpenAI key, or other LLM key is required by the documented workflow. SerpApi usage is subject to the quotas and billing/credit limits of your SerpApi plan.
-Quick start
-1. Get the code
+# 🛒 LocalPrice AI
+
+### AI-Powered Shopping Intelligence & Price Comparison Platform
+
+LocalPrice AI is a shopping intelligence platform that helps users compare online product prices, discover nearby stores, review product information, track price history, and make more informed purchasing decisions.
+
+Built with Python, Streamlit, and SerpApi, the platform combines online shopping search, local business discovery, review analysis, web research, and rule-based recommendations in a single interface.
+
+**Find better deals. Explore nearby stores. Make smarter buying decisions.**
+
+---
+
+## 📌 Table of Contents
+
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+- [How It Works](#-how-it-works)
+- [Agents and Core Components](#-agents-and-core-components)
+- [Technology Stack](#-technology-stack)
+- [API Keys and Configuration](#-api-keys-and-configuration)
+- [SerpApi Integration](#-serpapi-integration)
+- [Installation and Setup](#-installation-and-setup)
+- [How to Use](#-how-to-use)
+- [Project Structure](#-project-structure)
+- [System Architecture](#-system-architecture)
+- [Data Storage](#-data-storage)
+- [Security and Privacy](#-security-and-privacy)
+- [Limitations](#-limitations)
+- [Future Enhancements](#-future-enhancements)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## 🌟 Overview
+
+Finding the right product at the right price often requires checking multiple websites, comparing sellers, searching for nearby stores, and evaluating customer feedback.
+
+LocalPrice AI simplifies this process by bringing these shopping research capabilities into one application.
+
+Users can enter a product name, specify their location, set a budget, choose their recommendation priority, and explore available results through an interactive dashboard.
+
+### Project Goals
+
+- Simplify online price comparison.
+- Help users discover relevant nearby stores.
+- Present product information and available customer feedback.
+- Support price-history tracking.
+- Provide explainable, rule-based buying recommendations.
+- Generate downloadable shopping analysis reports.
+
+---
+
+## ✨ Key Features
+
+### 1. 💰 Online Price Comparison
+
+- Search for products using Google Shopping results.
+- Display product titles, sellers, prices, and available ratings.
+- Show product links when valid URLs are available.
+- Support budget-based product filtering.
+- Help users compare available shopping results.
+
+### 2. 📍 Nearby Store Discovery
+
+- Search for relevant local stores using Google Maps results.
+- Display available addresses, ratings, contact information, and opening-status information.
+- Show website links when available.
+- Support a configurable local search radius.
+
+*Store prices may require direct confirmation with the seller.*
+
+### 3. ⭐ Customer Review Intelligence
+
+- Retrieve supported reviews for selected stores.
+- Display available customer feedback.
+- Summarize positive and negative keyword signals.
+
+Review sentiment is based on simple keyword matching, not a trained sentiment-analysis model.
+
+### 4. 📈 Price History
+
+- Save product price snapshots locally.
+- Retrieve historical records from the database.
+- Display available price trends in a chart.
+- Exclude invalid prices and extreme outliers from the displayed history.
+
+Price history builds over time as searches are performed and valid snapshots are saved.
+
+### 5. 🧠 Smart Buy Decision
+
+The recommendation component evaluates available product and store information according to the selected priority.
+
+Supported priorities include:
+
+- Best Overall
+- Cheapest
+- Highest Rated
+- Nearest
+- Fastest Delivery
+
+The recommendation logic is rule-based and depends on the available search-result data.
+
+### 6. 📷 Product Image Search
+
+- Upload a supported product image.
+- Search for visually similar products through Google Lens-related functionality.
+- Display available visual matches, prices, and result links.
+
+### 7. 🌐 Web Evidence
+
+- Retrieve supporting web search results.
+- Display relevant titles, snippets, and source links.
+- Help users investigate additional information before purchasing.
+
+### 8. 🔔 Price Alerts
+
+- Save a target price for a product.
+- Display saved alert information.
+
+**Current limitation:** Alerts are stored locally. Automatic email, WhatsApp, push notifications, and continuous background monitoring are not implemented.
+
+### 9. 📄 PDF Reports
+
+- Generate a downloadable shopping analysis report.
+- Include available product, store, recommendation, and price-history information.
+
+### 10. 🎯 Budget and Location Controls
+
+- Enter a maximum budget.
+- Specify a search location.
+- Adjust the local search radius.
+- Select a preferred recommendation strategy.
+
+---
+
+## 🔄 How It Works
+
+1. **Enter a product:** The user specifies the product they want to find.
+2. **Configure preferences:** The user enters a location, budget, search radius, and recommendation priority.
+3. **Retrieve results:** The application requests relevant shopping, maps, and web search data.
+4. **Process the results:** Product and store data are enriched and prepared for display.
+5. **Save price snapshots:** Valid product prices are stored in the local database.
+6. **Generate recommendations:** The recommendation component evaluates the available information.
+7. **Explore the dashboard:** The user reviews prices, stores, customer feedback, price history, image matches, and web evidence.
+8. **Export a report:** The user can generate a PDF report of the shopping analysis.
+
+---
+
+## 🤖 Agents and Core Components
+
+LocalPrice AI uses task-specific components to organize shopping research. These components should not be confused with autonomous AI agents or independent large language models.
+
+| Component | Responsibility | Main Implementation |
+|---|---|---|
+| Shopping Search | Retrieves online product listings and prices | `SerpApiClient` |
+| Local Store Discovery | Retrieves nearby business information | `SerpApiClient` |
+| Product Enrichment | Processes shopping results and applies budget-related filtering | `enrich_products()` |
+| Store Enrichment | Processes local store results using the configured radius | `enrich_stores()` |
+| Recommendation Engine | Produces a buying recommendation using available data and selected priorities | `build_recommendation()` |
+| Review Intelligence | Retrieves and summarizes available review information | Streamlit application and review logic |
+| Image Search | Uploads an image and retrieves supported visual search results | `SerpApiClient` |
+| Web Research | Retrieves supporting web results | `SerpApiClient` |
+| Price Tracking | Saves and retrieves historical price snapshots | `PriceDB` |
+| Report Generation | Creates downloadable PDF reports | `create_pdf_report()` |
+
+### Component Workflow
+
+The main application coordinates these components and presents their outputs through the Streamlit interface.
+
+The shopping and discovery components rely on external search APIs. Data processing, recommendation logic, database operations, and report generation are handled by the application's Python modules.
+
+---
+
+## 🧰 Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| Python | Application logic and data processing |
+| Streamlit | Interactive web application and dashboard |
+| SerpApi | Search-result retrieval |
+| Pandas | Tabular data processing |
+| SQLite or the database configured by `PriceDB` | Local price history and alert storage |
+| HTML and CSS | Custom interface styling |
+| PDF generation library used by `reports.py` | Report creation |
+| Git and GitHub | Version control and source-code hosting |
+| Streamlit Community Cloud | Optional application deployment |
+
+The exact dependency versions are defined in `requirements.txt`. Database behavior and report-generation dependencies are defined by the corresponding source modules.
+
+---
+
+## 🔑 API Keys and Configuration
+
+### Required API Key
+
+LocalPrice AI requires a **SerpApi API key** to retrieve supported search results.
+
+Create or obtain your key from:
+
+https://serpapi.com/
+
+### Option 1: Configure Using a `.env` File
+
+Create a file named `.env` in the project root directory:
+
+```env
+SERPAPI_API_KEY=your_serpapi_api_key_here
+```
+
+Replace the placeholder with your actual key.
+
+If you want the application to read `.env` automatically, ensure that `python-dotenv` is installed and loaded in the application before reading environment variables.
+
+The current application reads the key from Streamlit Secrets or the operating-system environment. A `.env` file is not automatically loaded by Python unless the application or its startup process loads it.
+
+### Option 2: Configure Using Environment Variables
+
+**Windows PowerShell:**
+
+```powershell
+$env:SERPAPI_API_KEY="your_serpapi_api_key_here"
+python -m streamlit run app.py
+```
+
+**Linux or macOS:**
+
+```bash
+export SERPAPI_API_KEY="your_serpapi_api_key_here"
+python -m streamlit run app.py
+```
+
+### Option 3: Configure Streamlit Cloud
+
+For a deployed application:
+
+1. Open your app in Streamlit Community Cloud.
+2. Open the app settings.
+3. Find the **Secrets** section.
+4. Add the following configuration:
+
+```toml
+SERPAPI_API_KEY = "your_serpapi_api_key_here"
+```
+
+5. Save the configuration and restart or rerun the app if required.
+
+### Security Rules
+
+- Never commit `.env` files or API keys to GitHub.
+- Add `.env` to `.gitignore`.
+- Use Streamlit Secrets for deployed applications.
+- If a key is accidentally exposed, revoke or rotate it through the provider.
+- Keep API keys out of source code, screenshots, logs, and public documentation.
+
+---
+
+## 🔎 SerpApi Integration
+
+SerpApi supplies search-result data used by LocalPrice AI. The exact availability of fields depends on the search response and the provider's current API behavior.
+
+| Search API / Feature | Purpose |
+|---|---|
+| Google Shopping | Retrieves online product listings, prices, sellers, and available product metadata |
+| Google Maps | Discovers nearby businesses and local stores |
+| Google Maps Reviews | Retrieves supported reviews for selected places |
+| Google Search | Provides supporting web results and snippets |
+| Google Lens | Supports product-image matching and visual search |
+| Google Product | Can retrieve additional details for a supported shopping product identifier, if enabled by the client implementation |
+| Image Upload | Supports the image-upload step required by the configured visual-search workflow |
+
+The application wraps provider requests through `SerpApiClient`, keeping API communication separate from much of the dashboard presentation logic.
+
+### Important Usage Notes
+
+- Not every result contains a price, rating, review count, image, or direct product URL.
+- Some API features may require specific request parameters or identifiers.
+- API usage is subject to SerpApi plan limits, credits, pricing, and provider terms.
+- Search-result prices and availability can change.
+- Always verify the current implementation in `serpapi_client.py` before assuming a particular endpoint is enabled.
+
+Official documentation:
+
+- SerpApi: https://serpapi.com/
+- Google Shopping API: https://serpapi.com/google-shopping-api
+- Google Maps API: https://serpapi.com/google-maps-api
+- Google Maps Reviews API: https://serpapi.com/google-maps-reviews-api
+- Google Search API: https://serpapi.com/search-api
+- Google Lens API: https://serpapi.com/google-lens-api
+- Google Product API: https://serpapi.com/google-product-api
+
+---
+
+## ⚙️ Installation and Setup
+
+### Prerequisites
+
+Install the following before starting:
+
+- Python 3.10 or a compatible version supported by your dependencies.
+- pip, the Python package installer.
+- A SerpApi API key.
+- Git, if cloning the repository.
+
+### Step 1: Clone the Repository
+
+```bash
 git clone https://github.com/n93501614-cloud/Local_Price_AI.git
 cd Local_Price_AI
-2. Create and activate a virtual environment
-Windows PowerShell:
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-macOS / Linux:
+```
+
+### Step 2: Create a Virtual Environment
+
+**Windows:**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks activation, use Command Prompt:
+
+```cmd
+.venv\Scripts\activate.bat
+```
+
+**Linux or macOS:**
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
-3. Install dependencies
+```
+
+### Step 3: Install Dependencies
+
+```bash
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-4. Configure the API key
-Copy the example environment file and edit .env:
-Windows PowerShell:
-Copy-Item .env.example .env
-macOS / Linux:
-cp .env.example .env
-Put your own key in .env:
-SERPAPI_API_KEY=your_real_serpapi_key
-Do not include quotation marks unless required by your environment, and do not add spaces around the = sign. Keep .env private and out of source control.
-Important local setup check: the app must load .env before it reads os.getenv("SERPAPI_API_KEY"). If your current app.py does not already load it, add these lines near the other imports and before the key is read:
-from dotenv import load_dotenv
-load_dotenv()
-The repository's .gitignore should include .env. If the file does not exist, add it before committing.
-5. Run the application
+pip install -r requirements.txt
+```
+
+### Step 4: Configure the API Key
+
+Set `SERPAPI_API_KEY` using one of the methods described in [API Keys and Configuration](#-api-keys-and-configuration).
+
+### Step 5: Run the Application
+
+```bash
 python -m streamlit run app.py
-Streamlit will print a local URL (usually http://localhost:8501). Open that URL in your browser.
-6. Make your first comparison
-Type a specific product name or model.
-Enter a city or area (for example, Hyderabad, Telangana, India).
-Set a budget and comparison preference if required.
-Select Find Best Deals.
-Use the dashboard tabs to review price listings, stores, review signals, price history, recommendations, image search, and web evidence.
-Generate a PDF report when you are ready to save or share the results.
-API keys and configuration
-Required key
-Variable
-Required?
-Purpose
-SERPAPI_API_KEY
-Yes
-Authenticates requests to SerpApi search engines and the image upload endpoint.
-This project uses one SerpApi key for its current external-data workflow. There is no separate key for each SerpApi engine.
-Local development
-Use a .env file as described in Quick start. The application can read the key from the process environment as well. If both .env and a shell environment variable define the same name, the effective value depends on the python-dotenv loading options and the application's configuration logic.
-For a one-session Windows PowerShell alternative, set the environment variable before launching Streamlit:
-$env:SERPAPI_API_KEY = "your_real_serpapi_key"
-python -m streamlit run app.py
-Streamlit Community Cloud
-Open the deployed app's settings.
-Open Secrets.
-Add the following TOML entry (replace the placeholder with your real key):
-SERPAPI_API_KEY = "your_real_serpapi_key"
-Save the settings and restart/redeploy the app if needed.
-Use Streamlit Secrets for hosted deployments rather than committing an .env file. The application version deployed to Streamlit must contain code that reads st.secrets["SERPAPI_API_KEY"] or the appropriate environment variable.
-SerpApi engines and endpoints
-The search adapter is implemented in serpapi_client.py. It sends search requests to SerpApi's /search.json endpoint and uses the SerpApi image endpoint to upload files for Lens search.
-SerpApi engine / endpoint
-Method in this project
-Purpose
-google_shopping
-shopping_search()
-Retrieves online shopping listings and available offer, price, rating, review, and delivery fields.
-google_maps
-maps_search()
-Discovers local businesses and returns available address, contact, hours, rating, and coordinate fields.
-google_maps_reviews
-maps_reviews()
-Fetches reviews for a Maps result using its supported data_id or place_id.
-google_product
-product_details()
-Requests a product-details result using product_id and, where applicable, page_token.
-google
-web_search()
-Retrieves general web search results for pricing context and supporting sources.
-google_lens
-lens_search()
-Uses an uploaded image ID to return product or visual matches.
-SerpApi Image API (/image)
-upload_image()
-Uploads the user's image and returns the temporary image ID passed to Google Lens.
-API calls are made on demand by the application. Results depend on the search query, location, source coverage, SerpApi response fields, service availability, and account limits. Not every search returns every field.
-Project structure
+```
+
+Streamlit will display a local URL, usually:
+
+```text
+http://localhost:8501
+```
+
+Open the URL in your browser.
+
+---
+
+## 🖥️ How to Use
+
+1. Launch LocalPrice AI.
+2. Enter a product name, such as a smartphone or laptop.
+3. Enter the location where you want to find products or stores.
+4. Set a maximum budget if needed.
+5. Select a local search radius.
+6. Choose a recommendation priority.
+7. Click **Find Best Deals**.
+8. Explore the dashboard tabs:
+   - Online Prices
+   - Nearby Stores
+   - Reviews
+   - Price History
+   - AI Decision
+   - Image Search
+   - Web Evidence
+   - Price Alerts
+   - Report
+9. Open available product or seller links to verify the listing.
+10. Generate and download a PDF report when required.
+
+Results depend on API availability, the search query, location, provider limits, and the fields returned by the provider.
+
+---
+
+## 📁 Project Structure
+
+The following is the expected structure based on the main application modules. Confirm exact filenames against the current repository before adding or removing files.
+
+```text
 Local_Price_AI/
-├── app.py                     # Streamlit UI and workflow orchestration
-├── serpapi_client.py           # SerpApi HTTP client and engine-specific methods
-├── scoring.py                  # Result normalization and recommendation heuristics
-├── database.py                 # SQLite tables and data access for history/alerts
-├── reports.py                  # PDF report generation
-├── requirements.txt            # Python dependencies
-├── .env.example                # Example API-key environment file
-├── .gitignore                  # Excludes secrets, DB, cache, and generated report
-├── run_localprice_ai.bat       # Optional Windows launcher, if included in the checkout
-└── README.md                   # Product and developer documentation
-Runtime files are created as needed and may not exist in a fresh clone:
-localprice_ai.db — SQLite database for price snapshots and saved target-price alerts.
-localprice_ai_report.pdf — generated PDF report.
-.venv/ — local Python virtual environment, if created.
-Architecture
+│
+├── app.py
+├── serpapi_client.py
+├── scoring.py
+├── database.py
+├── reports.py
+├── requirements.txt
+├── README.md
+├── .gitignore
+├── .env                  # Local only; never commit
+└── .streamlit/
+    └── secrets.toml      # Optional local Streamlit secrets
+```
+
+### Module Responsibilities
+
+| File | Responsibility |
+|---|---|
+| `app.py` | Streamlit interface, user inputs, search orchestration, tabs, and result display |
+| `serpapi_client.py` | SerpApi requests for shopping, maps, reviews, web search, and image search |
+| `scoring.py` | Product and store enrichment plus buying recommendation logic |
+| `database.py` | Price-history snapshots and price-alert storage |
+| `reports.py` | PDF report generation |
+| `requirements.txt` | Python package dependencies |
+| `.env` | Local environment variables; should not be committed |
+| `.streamlit/secrets.toml` | Optional local Streamlit Secrets configuration |
+
+Runtime database files may be created by the database implementation and may not exist in a fresh clone.
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
 flowchart TD
-    U[Shopper] --> UI[Streamlit UI - app.py]
-    UI --> S[SerpApiClient - serpapi_client.py]
-    S --> GS[Google Shopping]
-    S --> GM[Google Maps]
-    S --> GR[Google Maps Reviews]
-    S --> GP[Google Product]
-    S --> GW[Google Search]
-    S --> GL[Google Lens + Image Upload]
-    GS --> N[Normalize results - scoring.py]
-    GM --> N
-    GP --> N
-    GR --> R[Review display and keyword signals]
-    GW --> W[Web evidence]
-    GL --> V[Visual matches]
-    N --> D[Rule-based recommendation]
-    N --> DB[SQLite - database.py]
-    DB --> H[Price history and saved alerts]
-    D --> UI
-    R --> UI
-    W --> UI
-    V --> UI
-    UI --> PDF[PDF generator - reports.py]
-Design principles
-Modular responsibilities: HTTP integration, scoring, persistence, and reporting are separated into small Python modules.
-Explainable recommendations: the decision layer uses visible inputs and weighted rules instead of claiming opaque model predictions.
-Graceful handling of external data: SerpApi errors and incomplete result fields should be expected and surfaced to the user.
-Local persistence by default: price history and alert records are stored in a local SQLite file unless deployment storage is explicitly configured.
-Data storage and generated reports
-The SQLite database contains two main tables:
-price_history — query, product title, seller/source, price, URL, product ID, and timestamp.
-alerts — product query, target price, active flag, and creation timestamp.
-Price history is built from searches made through the app. A new search can add a new snapshot; the application cannot reconstruct prices from before it was first used. In hosted environments, local files may not be durable across redeployments unless persistent storage is configured.
-The PDF report is generated locally from the current search context and saved price history. It is a point-in-time report, not a live price feed.
-Troubleshooting
-Symptom
-What to check
-SerpApi API key is not configured
-Confirm .env is in the project root, the variable is spelled SERPAPI_API_KEY, and load_dotenv() runs before reading the environment. For Streamlit Cloud, check the app's Secrets settings.
-ModuleNotFoundError
-Activate the correct virtual environment and run python -m pip install -r requirements.txt. Confirm pandas is listed if the app imports it.
-SerpApi returns an API or quota error
-Check the key, available searches/credits, request parameters, and SerpApi account status. Do not publish the key in logs or screenshots.
-Results have no price or rating
-Not all search listings include those fields. Try a more specific product query and verify the listing on the seller's site.
-No local stores appear
-Try a more specific location or broader store query. Maps coverage and result availability vary by area.
-Image search does not return results
-Use a supported JPG, JPEG, PNG, or WebP file within the application's configured size limit, and confirm image upload and Lens requests are succeeding.
-Local history or alerts look empty
-The database only contains records saved by the running app and matching the requested product query. Check which working directory contains localprice_ai.db.
-Current scope and limitations
-Prices, discounts, seller ratings, delivery details, and availability are third-party search-result snapshots; they can change and should be verified at checkout.
-A Maps listing identifies a business; it does not prove that the exact product is stocked there or that the business's product price is current.
-Recommendation scores are application-level heuristics, not model confidence, financial advice, or a guarantee of the best purchase. The current Nearest and Fastest Delivery preference labels should not be interpreted as guaranteed distance-based or delivery-time-based ranking; those capabilities need dedicated scoring and validation.
-Review sentiment signals are simple keyword-based indicators, not a trained sentiment-analysis model.
-Target-price alerts are saved records. Automatic periodic price checks and email, SMS, WhatsApp, or push notifications are not part of the current documented implementation.
-Local SQLite storage is suitable for a small single-instance deployment. A shared database and durable hosted storage would be needed for multi-user production operations.
-The project does not currently require an external LLM key; the word “AI” refers to the shopping-intelligence workflow and decision heuristics in the present implementation.
-Extension roadmap
-Potential next steps for a production-oriented release include:
-Scheduled price monitoring — a background scheduler, alert status lifecycle, and email/SMS/push delivery with user consent.
-Stronger entity matching — compare model numbers, storage sizes, colors, condition, seller identity, and variant attributes before ranking prices.
-Distance-aware local ranking — geocode the shopper's position and calculate dependable distances for nearby-store sorting and radius filtering.
-Persistent multi-user storage — replace or augment local SQLite with a managed database, migrations, backups, and account-scoped records.
-Test coverage and observability — unit tests for scoring and parsing, API mocks, structured logging, latency metrics, and safe error messages.
-Product-grade operations — CI checks, versioned releases, configuration validation, privacy/retention documentation, and deployment health checks.
-Optional LLM integration — add natural-language explanations only if useful, document the provider clearly, and keep user data and API credentials protected.
-Security notes
-Never commit .env, API keys, personal tokens, or Streamlit secrets.
-Keep .env in .gitignore; commit .env.example with placeholders only.
-If a key is accidentally exposed, revoke or rotate it in the provider dashboard and update the environment configuration.
-Do not send confidential images or personal information to external search services. Uploaded images are sent to SerpApi for visual search.
-Before offering this as a public service, add an explicit privacy notice, terms of use, abuse controls, and a policy for retaining or deleting query and price-history data.
-LocalPrice AI — compare smarter, research with context, and make better-informed shopping decisions.
+    A[User] --> B[Streamlit Interface: app.py]
+    B --> C[SerpApiClient]
+    C --> D[Google Shopping]
+    C --> E[Google Maps and Reviews]
+    C --> F[Google Search]
+    C --> G[Google Lens Workflow]
+    D --> H[Product Enrichment]
+    E --> I[Store Enrichment]
+    F --> J[Web Evidence]
+    G --> K[Image Results]
+    H --> L[Recommendation Engine]
+    I --> L
+    H --> M[Price Database]
+    M --> N[Price History]
+    L --> O[Smart Buy Decision]
+    B --> P[Review Intelligence]
+    B --> Q[PDF Report Generator]
+    B --> R[Price Alerts]
+```
+
+### Architecture Principles
+
+- **Modular design:** API communication, data processing, persistence, and reporting are separated into modules.
+- **Single interface:** Users access the available capabilities through one Streamlit application.
+- **External data retrieval:** Search information comes from SerpApi.
+- **Explainable recommendations:** Buying decisions are produced using application-defined logic.
+- **Local persistence:** Price snapshots and alerts are stored according to the database implementation.
+- **Extensibility:** New search providers, scoring rules, and reporting features can be added as separate modules.
+
+---
+
+## 🗄️ Data Storage
+
+The `PriceDB` component manages the application's price history and saved alerts.
+
+### Price History
+
+When valid product prices are available, the application saves snapshots containing information such as:
+
+- Product query
+- Product title
+- Seller or source
+- Price
+- Product URL
+- Product identifier, when available
+
+The history view retrieves stored records and displays a chart of available prices over time.
+
+### Price Alerts
+
+Users can save target prices and view their saved alerts.
+
+**Persistence note:** Local database files may not be preserved across some hosted deployment restarts or rebuilds. Production deployments should use persistent storage if long-term price history and alerts are required.
+
+---
+
+## 🔐 Security and Privacy
+
+LocalPrice AI uses external APIs and may process product queries and location text to retrieve shopping results.
+
+Recommended deployment practices:
+
+- Store credentials in environment variables or Streamlit Secrets.
+- Exclude secret files and local databases from version control where appropriate.
+- Avoid logging credentials or sensitive configuration values.
+- Validate external URLs before displaying links.
+- Use dependency versions tested with the application.
+- Review the privacy implications of sending queries and location information to external providers.
+
+---
+
+## ⚠️ Limitations
+
+LocalPrice AI is designed to support shopping research, but its results should be verified before making a purchase.
+
+- Product listings and prices depend on external search results.
+- Direct product links may be missing or redirect to a seller's website.
+- Nearby-store results may not include confirmed prices or current availability.
+- Review analysis uses simple keyword signals.
+- Recommendations depend on available data and configured scoring logic.
+- Price history requires valid snapshots to have been saved.
+- Price alerts currently do not provide automatic background notifications.
+- Image search depends on the configured upload and visual-search workflow.
+- API requests are subject to provider quotas, rate limits, and network availability.
+
+---
+
+## 🚀 Future Enhancements
+
+Potential product-development directions include:
+
+- Automated price-drop monitoring and notifications.
+- Persistent cloud database support.
+- Improved product matching across sellers.
+- Historical price charts with more granular comparisons.
+- Dedicated product-detail pages.
+- More robust review sentiment analysis.
+- Optional machine-learning-based recommendation models.
+- User accounts and saved shopping lists.
+- Caching, retries, and API usage monitoring.
+- Automated tests and continuous integration.
+- Containerized deployment and production observability.
+- Additional shopping providers and regional marketplaces.
+
+These are potential extensions, not claims about currently implemented functionality.
+
+---
+
+## 🛠️ Troubleshooting
+
+### `SerpApi API key is not configured`
+
+- Verify that `SERPAPI_API_KEY` is set correctly.
+- Check Streamlit Secrets when running on Streamlit Community Cloud.
+- Restart the application after changing environment configuration.
+
+### `ModuleNotFoundError`
+
+Activate your virtual environment and run:
+
+```bash
+pip install -r requirements.txt
+```
+
+### `streamlit` Is Not Recognized
+
+Run Streamlit through Python:
+
+```bash
+python -m streamlit run app.py
+```
+
+### No Shopping Results
+
+- Try a more specific product name.
+- Check your SerpApi account and remaining request allowance.
+- Confirm that the API request succeeded.
+- Remember that not every result contains usable pricing information.
+
+### No Price History
+
+Search for products with valid prices and check again. Historical records are created as the application saves price snapshots.
+
+### Product Link Unavailable
+
+Some search results do not provide a valid product URL. Try another listing and verify the destination before purchasing.
+
+---
+
+## 🤝 Contributing
+
+Contributions that improve reliability, usability, performance, and maintainability are welcome.
+
+Suggested workflow:
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make a focused change.
+4. Test the application locally.
+5. Submit a pull request describing the change and its impact.
+
+Please avoid committing credentials, environment files, or private configuration.
+
+---
+
+## 📄 License
+
+Choose and add an appropriate open-source license before distributing the project. Until a license is added to the repository, reuse and redistribution permissions should not be assumed.
+
+---
+
+## 🛒 Project Summary
+
+**LocalPrice AI** brings together online shopping search, local store discovery, price tracking, review insights, product-image search, and explainable buying recommendations in a unified application.
+
+The goal is to make shopping research more convenient, transparent, and data-informed.
+
+**Built with Python, Streamlit, and SerpApi.**
