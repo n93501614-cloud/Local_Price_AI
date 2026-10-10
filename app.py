@@ -509,21 +509,6 @@ if "products" in st.session_state:
                             ("https://", "http://")
                         )
                     ):
-                        st.link_button(
-                            "🛒 Visit Product",
-                            product_link,
-                            key=f"product_link_{i}"
-                        )
-                    else:
-                        st.caption(
-                            "Product link unavailable"
-                        )
-
-                    if product.get("snippet"):
-                        st.caption(
-                            str(product["snippet"])[:220]
-                        )
-
                 # -----------------------------------------
                 # PRICE
                 # -----------------------------------------
