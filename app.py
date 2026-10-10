@@ -509,26 +509,26 @@ if "products" in st.session_state:
                         ("https://", "http://")
                     )
                 ):
-                # -----------------------------------------
-                # PRICE
-                # -----------------------------------------
 
-                with cols[1]:
+                    # -----------------------------------------
+                    # PRICE
+                    # -----------------------------------------
 
-                    st.metric(
-                        "Price",
-                        product.get(
-                            "price_text",
-                            "N/A"
-                        )
-                    )
+                    with cols[1]:
 
-                    if product.get("old_price"):
-                        st.caption(
-                            "Old: "
-                            + str(product["old_price"])
+                        st.metric(
+                            "Price",
+                            product.get(
+                                "price_text",
+                                "N/A"
+                            )
                         )
 
+                        if product.get("old_price"):
+                            st.caption(
+                                "Old: "
+                                + str(product["old_price"])
+                            )
 
                 # -----------------------------------------
                 # RATING
